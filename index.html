@@ -786,6 +786,31 @@
       line-height: 1.7;
     }
 
+    .vol-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .vol-bullets li {
+      font-size: 14px;
+      color: #94a3b8;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.6;
+    }
+
+    .vol-bullets li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 11px;
+      top: 3px;
+    }
+
     /* CONTACT */
     #contact {
       padding: 120px 0 160px;
@@ -1308,33 +1333,55 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
       </div>
 
       <div class="vol-grid">
+
         <div class="vol-card">
           <div class="vol-org">Washington Commanders · NFL</div>
           <h3 class="vol-role">Marching Band — Trumpet 🎺</h3>
           <div class="vol-period">Jun 2022 — Present</div>
-          <p class="vol-desc">One of 70 highly selective members performing at FedExField during home games. Nominated for the 2025 Combined Leagues All-Star Band (Upper Brass). Collaborates with musicians to learn and memorize music and marching sets that enhance the guest experience.</p>
+          <ul class="vol-bullets">
+            <li>One of 70 selected performers for Commanders home games at FedExField.</li>
+            <li>Collaborates with ensemble to execute show music and field sets under live-game pressure.</li>
+            <li>Nominated for the 2025 Combined Leagues All-Star Band (Upper Brass).</li>
+          </ul>
         </div>
 
         <div class="vol-card">
           <div class="vol-org">Word of Life International Church</div>
-          <h3 class="vol-role">Marching Band Director & Composer 🎵</h3>
+          <h3 class="vol-role">Marching Band Director &amp; Composer 🎵</h3>
           <div class="vol-period">Apr 2024 — Present</div>
-          <p class="vol-desc">Directs rehearsals and performances for a church-based marching band/drumline. Mentors young musicians on timing, technique, and ensemble confidence. Composes and arranges marching-style music tailored to instrumentation and skill level.</p>
+          <ul class="vol-bullets">
+            <li>Leads rehearsals and performances for a church-based marching band/drumline.</li>
+            <li>Mentors young musicians on timing, technique, and ensemble confidence.</li>
+            <li>Arranges original marching-style music tailored to instrumentation and skill level.</li>
+          </ul>
         </div>
 
         <div class="vol-card">
           <div class="vol-org">George Mason University</div>
           <h3 class="vol-role">Peer Academic Advisor 📚</h3>
           <div class="vol-period">Jun 2022 — Present</div>
-          <p class="vol-desc">Provides individualized guidance to GMU students on 4-year academic plans, career paths, certifications, and professional development. Hosts resume and LinkedIn optimization sessions to empower students to build strong professional profiles.</p>
+          <ul class="vol-bullets">
+            <li>Advises students on 4-year academic plans, career paths, and certification strategy.</li>
+            <li>Hosts resume + LinkedIn sessions focused on clarity, impact, and professional presence.</li>
+            <li>Supports students with practical next steps and accountability toward internships and full-time roles.</li>
+          </ul>
         </div>
 
         <div class="vol-card">
           <div class="vol-org">George Mason University</div>
-          <h3 class="vol-role">Education & Activities 🎓</h3>
+          <h3 class="vol-role">Education &amp; Activities 🎓</h3>
           <div class="vol-period">Aug 2019 — May 2023</div>
-          <p class="vol-desc">Green Machine Pep Band · Black Student Alliance · African Student Association · Eritrean-Ethiopian Student Association · Minorities in Computing · Intramural Basketball · Mason Competitive Cyber. Graduated Magna Cum Laude with 7× Dean's List honors.</p>
+          <ul class="vol-bullets">
+            <li>Green Machine Pep Band</li>
+            <li>Minorities in Computing</li>
+            <li>Mason Competitive Cyber</li>
+            <li>Eritrean-Ethiopian Student Association</li>
+            <li>Black Student Alliance</li>
+            <li>Intramural Basketball</li>
+            <li>Magna Cum Laude · 7× Dean's List</li>
+          </ul>
         </div>
+
       </div>
     </div>
   </section>
@@ -1354,7 +1401,7 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
             Whether you're looking to collaborate, have an opportunity in cloud security or DevSecOps, or just want to talk shop about Prisma Cloud, Terraform, or marching band — my inbox is open.
           </p>
           <div class="contact-links">
-            <a href="mailto:samuelberh619@gmail.com" class="contact-link">
+            <a href="/cdn-cgi/l/email-protection#d0a3b1bda5b5bcb2b5a2b8e6e1e990b7bdb1b9bcfeb3bfbd" class="contact-link">
               <span class="contact-link-icon">✉️</span>
               <div>
                 <div>Shoot an Email</div>
