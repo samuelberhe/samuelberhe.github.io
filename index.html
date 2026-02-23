@@ -134,15 +134,15 @@
       padding: 0 40px;
     }
 
-    /* HERO */
-    #hero {
+    /* home */
+    #home {
       min-height: 100vh;
       display: flex;
       align-items: center;
       padding: 120px 0 80px;
     }
 
-    .hero-inner {
+    .home-inner {
       max-width: 1100px;
       margin: 0 auto;
       padding: 0 40px;
@@ -152,7 +152,7 @@
       align-items: center;
     }
 
-    .hero-tag {
+    .home-tag {
       font-family: var(--mono);
       font-size: 12px;
       color: var(--accent);
@@ -163,7 +163,7 @@
       animation: fadeUp 0.6s ease forwards 0.2s;
     }
 
-    .hero-name {
+    .home-name {
       font-family: var(--display);
       font-size: clamp(48px, 6vw, 80px);
       font-weight: 800;
@@ -173,14 +173,14 @@
       animation: fadeUp 0.6s ease forwards 0.4s;
     }
 
-    .hero-name span {
+    .home-name span {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .hero-role {
+    .home-role {
       font-size: 18px;
       color: var(--muted);
       margin-top: 16px;
@@ -189,7 +189,7 @@
       animation: fadeUp 0.6s ease forwards 0.6s;
     }
 
-    .hero-bio {
+    .home-bio {
       margin-top: 28px;
       font-size: 15px;
       color: #94a3b8;
@@ -199,7 +199,7 @@
       animation: fadeUp 0.6s ease forwards 0.8s;
     }
 
-    .hero-actions {
+    .home-actions {
       margin-top: 40px;
       display: flex;
       gap: 16px;
@@ -272,21 +272,21 @@
       transform: translateY(-1px);
     }
 
-    /* Hero photo */
-    .hero-photo-wrap {
+    /* home photo */
+    .home-photo-wrap {
       position: relative;
       display: flex;
       justify-content: center;
       margin-bottom: 28px;
     }
 
-    .hero-photo-ring {
+    .home-photo-ring {
       position: relative;
       width: 140px;
       height: 140px;
     }
 
-    .hero-photo-ring::before {
+    .home-photo-ring::before {
       content: '';
       position: absolute;
       inset: -4px;
@@ -301,7 +301,7 @@
       to { transform: rotate(360deg); }
     }
 
-    .hero-photo-ring::after {
+    .home-photo-ring::after {
       content: '';
       position: absolute;
       inset: -4px;
@@ -312,7 +312,7 @@
       opacity: 0.5;
     }
 
-    .hero-photo {
+    .home-photo {
       position: relative;
       z-index: 1;
       width: 140px;
@@ -323,7 +323,7 @@
       border: 3px solid var(--bg);
     }
 
-    .hero-photo-badge {
+    .home-photo-badge {
       position: absolute;
       bottom: 6px;
       right: 0;
@@ -339,8 +339,8 @@
       z-index: 2;
     }
 
-    /* Hero right - terminal card */
-    .hero-terminal {
+    /* home right - terminal card */
+    .home-terminal {
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -945,8 +945,8 @@
 		justify-content: flex-end;
 	  }
 	  .nav-links a { font-size: 11px; }
-      .hero-inner { grid-template-columns: 1fr; gap: 40px; }
-      .hero-terminal { display: none; }
+      .home-inner { grid-template-columns: 1fr; gap: 40px; }
+      .home-terminal { display: none; }
       .contact-inner { grid-template-columns: 1fr; gap: 40px; }
       .container { padding: 0 24px; }
     }
@@ -962,7 +962,7 @@
   <nav>
     <div class="nav-logo">SB://PORTFOLIO</div>
     <ul class="nav-links">
-      <li><a href="#hero">Home</a></li>
+      <li><a href="#home">Home</a></li>
       <li><a href="#experience">Experience</a></li>
       <li><a href="#skills">Skills</a></li>
       <li><a href="#volunteering">Extras</a></li>
@@ -970,28 +970,28 @@
     </ul>
   </nav>
 
-  <!-- HERO -->
-  <section id="hero">
-    <div class="hero-inner">
+  <!-- home -->
+  <section id="home">
+    <div class="home-inner">
       <div>
-        <div class="hero-photo-wrap" style="opacity:0;animation:fadeUp 0.6s ease forwards 0.1s;">
-          <div class="hero-photo-ring">
-            <img class="hero-photo" src="profile.png" alt="Samuel Berhe" />
+        <div class="home-photo-wrap" style="opacity:0;animation:fadeUp 0.6s ease forwards 0.1s;">
+          <div class="home-photo-ring">
+            <img class="home-photo" src="profile.png" alt="Samuel Berhe" />
           </div>
         </div>
-        <p class="hero-tag">// Cybersecurity Engineer</p>
-        <h1 class="hero-name">Samuel<br /><span>Berhe</span></h1>
-        <p class="hero-role">Cloud Security · DevSecOps · Container Security</p>
-        <p class="hero-bio">
+        <p class="home-tag">// Cybersecurity Engineer</p>
+        <h1 class="home-name">Samuel<br /><span>Berhe</span></h1>
+        <p class="home-role">Cloud Security · DevSecOps · Container Security</p>
+        <p class="home-bio">
 Cloud Security Engineer securing multi-cloud environments at enterprise scale. At Humana, I build guardrails and automation that reduce risk across CI/CD and cloud infrastructure. I’m pursuing a Master’s in Cybersecurity at Georgia Tech and earned a B.S. in Information Technology from George Mason University. <br /><br />As a first-generation graduate student, I’m passionate about mentorship and helping others grow in tech and security.</p>
-        <div class="hero-actions">
+        <div class="home-actions">
           <a href="#contact" class="btn btn-primary">Get In Touch</a>
           <a href="https://www.linkedin.com/in/samuelberhe/" target="_blank" class="btn btn-ghost">LinkedIn ↗</a>
           <a href="SB-Advisory.html" class="btn btn-advising">Need Advising? ✦</a>
         </div>
       </div>
 
-      <div class="hero-terminal">
+      <div class="home-terminal">
         <div class="terminal-bar">
           <div class="dot dot-r"></div>
           <div class="dot dot-y"></div>
