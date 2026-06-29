@@ -782,6 +782,44 @@
 
     footer a:hover { text-decoration: underline; }
 
+    /* --- Floating CTA --- */
+    #float-cta {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 200;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+    #float-cta.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .float-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 4px;
+      box-shadow: 0 4px 24px rgba(123,47,255,0.45);
+      animation: glowPulse 3s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    .float-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(123,47,255,0.6);
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -927,6 +965,10 @@
 </head>
 <body>
 
+  <div id="float-cta">
+    <a href="mailto:samuelberhe619@gmail.com" class="float-cta-btn">✦ Book a Session</a>
+  </div>
+
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
@@ -977,11 +1019,11 @@
         <div class="advisor-tagline">// Mentorship by Samuel Berhe</div>
         <div class="advisor-stats">
           <div>
-            <div class="adv-stat-num">18+</div>
+            <div class="adv-stat-num" data-count="18" data-suffix="+">0</div>
             <div class="adv-stat-label">Students Mentored</div>
           </div>
           <div>
-            <div class="adv-stat-num">4+</div>
+            <div class="adv-stat-num" data-count="4" data-suffix="+">0</div>
             <div class="adv-stat-label">Years Advising</div>
           </div>
           <div>
@@ -1152,20 +1194,20 @@
         <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 2px;">— SAMUEL BERHE, CYBERSECURITY ENGINEER </div>
         <div class="impact-stats">
           <div class="impact-stat">
-            <div class="impact-num">16+</div>
+            <div class="impact-num" data-count="16" data-suffix="+">0</div>
             <div class="impact-label">Students Mentored</div>
           </div>
           <div class="impact-stat">
-            <div class="impact-num">4+</div>
+            <div class="impact-num" data-count="4" data-suffix="+">0</div>
             <div class="impact-label">Years Advising</div>
           </div>
           <div class="impact-stat">
-            <div class="impact-num">13</div>
+            <div class="impact-num" data-count="13" data-suffix="">0</div>
             <div class="impact-label">Industry Certifications Earned</div>
           </div>
           <div class="impact-stat">
-            <div class="impact-num">100%</div>
-            <div class="impact-label">Free — No Cost At this time</em></div>
+            <div class="impact-num" data-count="100" data-suffix="%">0</div>
+            <div class="impact-label">Free — No Cost At this time</div>
           </div>
         </div>
       </div>
@@ -1268,15 +1310,47 @@
   <script>
     document.body.classList.add('animate-ready');
 
+    // ── Stat counter animation ─────────────────────────────────────
+    function animateCounter(el) {
+      const target = parseFloat(el.dataset.count);
+      const suffix = el.dataset.suffix || '';
+      const decimals = parseInt(el.dataset.decimal || '0');
+      const duration = 1600;
+      const start = performance.now();
+      function step(now) {
+        const elapsed = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - elapsed, 3);
+        el.textContent = (target * ease).toFixed(decimals) + suffix;
+        if (elapsed < 1) requestAnimationFrame(step);
+        else el.textContent = target.toFixed(decimals) + suffix;
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ── Scroll reveal ──────────────────────────────────────────────
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) entry.target.classList.add('visible');
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // fire counters inside the revealed element
+          entry.target.querySelectorAll('[data-count]').forEach(animateCounter);
+        }
       });
     }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-    document.querySelectorAll('.service-card, .process-step, .impact-quote, .cta-inner, .testimonial-card').forEach(el => {
+    document.querySelectorAll('.service-card, .process-step, .impact-quote, .cta-inner, .testimonial-card, .advisor-card').forEach(el => {
       observer.observe(el);
     });
+
+    // ── Floating CTA — show after scrolling past hero ──────────────
+    const floatCta = document.getElementById('float-cta');
+    const heroSection = document.getElementById('hero');
+    const heroObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        floatCta.classList.toggle('visible', !entry.isIntersecting);
+      });
+    }, { threshold: 0.1 });
+    if (heroSection) heroObserver.observe(heroSection);
 
     document.querySelectorAll('.service-card').forEach((card, i) => {
       card.style.transitionDelay = (i * 0.08) + 's';
@@ -1288,6 +1362,30 @@
 
     document.querySelectorAll('.testimonial-card').forEach((card, i) => {
       card.style.transitionDelay = (i * 0.1) + 's';
+    });
+
+    // ── Cursor trail ───────────────────────────────────────────────
+    const trailColors = ['#7b2fff', '#0066ff', '#00ffe0'];
+    let trailCount = 0;
+    document.addEventListener('mousemove', (e) => {
+      if (trailCount++ % 3 !== 0) return;
+      const dot = document.createElement('div');
+      const size = Math.random() * 5 + 3;
+      const color = trailColors[Math.floor(Math.random() * trailColors.length)];
+      dot.style.cssText = `
+        position:fixed;border-radius:50%;pointer-events:none;z-index:9999;
+        transform:translate(-50%,-50%);
+        left:${e.clientX}px;top:${e.clientY}px;
+        width:${size}px;height:${size}px;
+        background:${color};opacity:0.7;
+        transition:opacity 0.5s,transform 0.5s;
+      `;
+      document.body.appendChild(dot);
+      requestAnimationFrame(() => {
+        dot.style.opacity = '0';
+        dot.style.transform = 'translate(-50%,-50%) scale(0)';
+      });
+      setTimeout(() => dot.remove(), 520);
     });
   </script>
 
