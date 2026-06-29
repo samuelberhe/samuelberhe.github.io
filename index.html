@@ -955,6 +955,80 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* --- Progress Bars (Skills) --- */
+    .skill-progress-wrap {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .skill-progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .skill-progress-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .skill-progress-pct {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+    }
+    .skill-progress-track {
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .skill-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      width: 0%;
+      transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* --- Timeline Collapse --- */
+    .tl-collapse-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      background: none;
+      border: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 2px;
+      cursor: pointer;
+      margin-top: 12px;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tl-collapse-btn:hover {
+      border-color: var(--accent);
+      background: rgba(0,255,224,0.05);
+    }
+    .tl-extra {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tl-extra.open { display: flex; }
+
+    /* --- Cursor Trail --- */
+    .trail-dot {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -1044,23 +1118,7 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
           <div class="dot dot-g"></div>
           <span class="terminal-title">samuel@cloud-sec ~ profile.json</span>
         </div>
-        <div class="terminal-body">
-          <div><span class="t-prompt">❯</span> <span class="t-cmd">cat profile.json</span></div>
-          <div>&nbsp;</div>
-          <div><span class="t-key">"name"</span>: <span class="t-str">"Samuel Berhe"</span>,</div>
-          <div><span class="t-key">"role"</span>: <span class="t-str">"Cloud Security Engineer II"</span>,</div>
-          <div><span class="t-key">"company"</span>: <span class="t-str">"Humana"</span>,</div>
-          <div><span class="t-key">"location"</span>: <span class="t-str">"Fairfax, VA"</span>,</div>
-          <div><span class="t-key">"education"</span>: [</div>
-          <div>&nbsp;&nbsp;<span class="t-str">"Georgia Tech — M.S. Cybersecurity, In-Progress ⏳"</span>,</div>
-          <div>&nbsp;&nbsp;<span class="t-str">"George Mason University — B.S. IT, 3.8 GPA 🎓"</span></div>
-          <div>],</div>
-          <div><span class="t-key">"certs"</span>: <span class="t-val">13</span>,</div>
-          <div><span class="t-key">"mentorship"</span>: <span class="t-val">18</span><span class="t-comment">+ students & early professionals</span>,</div>
-          <div><span class="t-key">"fun_fact"</span>: <span class="t-str">"NFL band trumpet player 🎺"</span></div>
-          <div>&nbsp;</div>
-          <div><span class="t-prompt">❯</span> <span class="cursor"></span></div>
-        </div>
+        <div class="terminal-body" id="terminal-output"></div>
       </div>
     </div>
   </section>
@@ -1089,9 +1147,11 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
             <ul class="tl-bullets">
               <li>🔎 Reviewed and analyzed Humana enterprise cloud blueprints (Azure/GCP) to identify configuration gaps and translate requirements into enforceable security controls.</li>
 			  <li>🛡️ Implemented and maintained 150+ custom IaC security policy checks (Checkov/Prisma) and integrated Prisma Cloud with Terraform Cloud to scan 4,000+ workspaces during plan runs, blocking misconfigurations before deployment.</li>
-              <li>🔐 Built and enabled 100+ custom CSPM policies using RQL queries to detect cloud misconfigurations, strengthen compliance monitoring, and trigger CLI-based auto-remediation.</li>      
+              <li>🔐 Built and enabled 100+ custom CSPM policies using RQL queries to detect cloud misconfigurations, strengthen compliance monitoring, and trigger CLI-based auto-remediation.</li>
 			  <li>🛠️ Authored Terraform IaC and built Azure DevOps CI/CD pipelines to provision and deploy Prisma Cloud resources and policy-as-code changes with controlled promotion across environments.</li>
               <li>🛡️ Developed Azure and GCP cloud-native security policies to enforce provisioning-time standards for cloud services.</li>
+            </ul>
+            <ul class="tl-bullets tl-extra" id="tl-humana-extra">
 			  <li>🔐 Managed Prisma Cloud IAM configurations, account grouping, integrations, alert rules, and day-to-day platform administration to optimize posture and streamline operations.</li>
 			  <li>🛡️ Implemented Prisma Cloud Compute runtime, vulnerability, and compliance policies for containers to establish consistent container security baselines across environments.</li>
 			  <li>🛠️ Developed Python scripts to detect Kubernetes clusters missing Prisma Cloud Defender; scheduled Splunk reports to track and remediate unprotected clusters.</li>
@@ -1104,6 +1164,7 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
 			  <li>🏆 Received the 2026 Q1 CISO Award as a key contributor to building the Container Security & HCR Image Validation solution, securing 200+ enterprise applications, standardizing HCR-certified image governance, proactively blocking unvalidated third-party images in CI/CD pipelines, and helping drive $7.5M in annual savings with zero production outages during rollout.</li>
 			  <li>🏆 Placed 4th out of 30 security teams in the 2026 EIP "Hack the Force" Al Hackathon by building an Al-driven vulnerability prioritization agent that analyzed security findings, correlated risk signals, and helped identify the most critical issues for remediation.</li>
             </ul>
+            <button class="tl-collapse-btn" onclick="toggleTimeline(this,'tl-humana-extra')">▸ Show more</button>
             <div class="tl-tags">
               <span class="tech-tag">Prisma Cloud</span>
               <span class="tech-tag">Terraform</span>
@@ -1216,11 +1277,14 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
               <li>💬 Assisted guests with consumer tech (phones, laptops, accessories), providing recommendations, setup/activation, data transfers, troubleshooting, firmware updates, and returns/warranty support in POS/CRM to maximize first-contact resolution and minimize returns.</li>
 			  <li>📦 Used handheld scanners and the store warehouse management system (WMS) to coordinate inventory flow and same-day fulfillment. Reduced INF exceptions through slotting and label checks, backroom audits, and real-time substitution triage.</li>
               <li>🚀 Trained 3–8 new team members per quarter using clear SOP handoffs and on-floor coaching to accelerate ramp-up and improve team performance.</li>
+            </ul>
+            <ul class="tl-bullets tl-extra" id="tl-target-extra">
               <li>🎯 Led day-to-day logistics for Pick, Pack, and OPU to meet service levels and metric goals during peak windows.</li>
               <li>📊 Raised store-wide fulfillment performance; consistently ranked on the Top 5 Weekly Leaderboard for Pick, Pack, INF, and OPU in a 70+ person department. Averages: 75–80 UPH (pick), 300–350 UPH (pack), 4–5% INF.</li>
               <li>🏆 Processed 40,000+ units in 2021 as a part-time employee, the most store-wide, and ranked in the top 10 for throughput across the district.</li>
-              <li>🏆 Recognized with 2 Performance Awards and earned top evaluation ratings of Delivered Exceptional Outcomes.</li>	
-			</ul>
+              <li>🏆 Recognized with 2 Performance Awards and earned top evaluation ratings of Delivered Exceptional Outcomes.</li>
+            </ul>
+            <button class="tl-collapse-btn" onclick="toggleTimeline(this,'tl-target-extra')">▸ Show more</button>
             <div class="tl-tags">
               <span class="tech-tag">Systems Troubleshooting</span>
               <span class="tech-tag">Team Leadership</span>
@@ -1475,27 +1539,27 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
           <div class="stats-title">// By The Numbers</div>
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-num">13</div>
+              <div class="stat-num" data-count="13" data-suffix="">0</div>
               <div class="stat-label">Certs</div>
             </div>
             <div class="stat-item">
-              <div class="stat-num">200+</div>
+              <div class="stat-num" data-count="200" data-suffix="+">0</div>
               <div class="stat-label">Security Controls Built & Deployed</div>
             </div>
             <div class="stat-item">
-              <div class="stat-num">3+</div>
+              <div class="stat-num" data-count="3" data-suffix="+">0</div>
               <div class="stat-label">Years in Cloud Security</div>
             </div>
             <div class="stat-item">
-              <div class="stat-num">4+</div>
+              <div class="stat-num" data-count="4" data-suffix="+">0</div>
               <div class="stat-label">Years Mentoring & Advising</div>
             </div>
             <div class="stat-item">
-              <div class="stat-num">18+</div>
+              <div class="stat-num" data-count="18" data-suffix="+">0</div>
               <div class="stat-label">Students Mentored</div>
             </div>
             <div class="stat-item">
-              <div class="stat-num">3.8</div>
+              <div class="stat-num" data-count="3.8" data-suffix="" data-decimal="1">0</div>
               <div class="stat-label">Undergrad GPA</div>
             </div>
           </div>
@@ -1511,15 +1575,125 @@ Cloud Security Engineer securing multi-cloud environments at enterprise scale. A
   <script>
     document.body.classList.add('animate-ready');
 
+    // ── Scroll reveal ──────────────────────────────────────────────
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) entry.target.classList.add('visible');
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // trigger progress bars when skill card becomes visible
+          entry.target.querySelectorAll('.skill-progress-fill').forEach(bar => {
+            bar.style.width = bar.dataset.width + '%';
+          });
+          // trigger stat counters when stats-box becomes visible
+          if (entry.target.classList.contains('stats-box')) {
+            entry.target.querySelectorAll('[data-count]').forEach(animateCounter);
+          }
+        }
       });
     }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
     document.querySelectorAll(
       '.timeline-item, .skill-card, .cert-item, .vol-card, .contact-link, .stats-box'
     ).forEach(el => observer.observe(el));
+
+    // ── Stat counter animation ─────────────────────────────────────
+    function animateCounter(el) {
+      const target = parseFloat(el.dataset.count);
+      const suffix = el.dataset.suffix || '';
+      const decimals = parseInt(el.dataset.decimal || '0');
+      const duration = 1600;
+      const start = performance.now();
+      function step(now) {
+        const elapsed = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - elapsed, 3);
+        const value = target * ease;
+        el.textContent = value.toFixed(decimals) + suffix;
+        if (elapsed < 1) requestAnimationFrame(step);
+        else el.textContent = target.toFixed(decimals) + suffix;
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ── Terminal typing animation ──────────────────────────────────
+    const termLines = [
+      `<div><span class="t-prompt">❯</span> <span class="t-cmd" id="t-cmd-text"></span></div>`,
+      `<div>&nbsp;</div>`,
+      `<div><span class="t-key">"name"</span>: <span class="t-str">"Samuel Berhe"</span>,</div>`,
+      `<div><span class="t-key">"role"</span>: <span class="t-str">"Cloud Security Engineer II"</span>,</div>`,
+      `<div><span class="t-key">"company"</span>: <span class="t-str">"Humana"</span>,</div>`,
+      `<div><span class="t-key">"location"</span>: <span class="t-str">"Fairfax, VA"</span>,</div>`,
+      `<div><span class="t-key">"education"</span>: [</div>`,
+      `<div>&nbsp;&nbsp;<span class="t-str">"Georgia Tech — M.S. Cybersecurity, In-Progress ⏳"</span>,</div>`,
+      `<div>&nbsp;&nbsp;<span class="t-str">"George Mason University — B.S. IT, 3.8 GPA 🎓"</span></div>`,
+      `<div>],</div>`,
+      `<div><span class="t-key">"certs"</span>: <span class="t-val">13</span>,</div>`,
+      `<div><span class="t-key">"mentorship"</span>: <span class="t-val">18</span><span class="t-comment">+ students & early professionals</span>,</div>`,
+      `<div><span class="t-key">"fun_fact"</span>: <span class="t-str">"NFL band trumpet player 🎺"</span></div>`,
+      `<div>&nbsp;</div>`,
+      `<div><span class="t-prompt">❯</span> <span class="cursor"></span></div>`,
+    ];
+
+    const termOut = document.getElementById('terminal-output');
+
+    function runTerminal() {
+      // First, type the command character by character
+      const cmdChars = 'cat profile.json';
+      let charIdx = 0;
+      // Append the command line container
+      termOut.insertAdjacentHTML('beforeend', termLines[0]);
+      const cmdEl = document.getElementById('t-cmd-text');
+      const typingInterval = setInterval(() => {
+        if (charIdx < cmdChars.length) {
+          cmdEl.textContent += cmdChars[charIdx++];
+        } else {
+          clearInterval(typingInterval);
+          // After typing command, reveal JSON lines one by one
+          let lineIdx = 1;
+          function showNextLine() {
+            if (lineIdx < termLines.length) {
+              termOut.insertAdjacentHTML('beforeend', termLines[lineIdx++]);
+              setTimeout(showNextLine, lineIdx < 3 ? 60 : 45);
+            }
+          }
+          setTimeout(showNextLine, 300);
+        }
+      }, 60);
+    }
+
+    // Start terminal animation after hero fade-in delay
+    setTimeout(runTerminal, 700);
+
+    // ── Timeline expand/collapse ───────────────────────────────────
+    function toggleTimeline(btn, id) {
+      const extra = document.getElementById(id);
+      const isOpen = extra.classList.toggle('open');
+      btn.textContent = isOpen ? '▾ Show less' : '▸ Show more';
+    }
+
+    // ── Cursor trail ───────────────────────────────────────────────
+    const trailColors = ['#00ffe0', '#0066ff', '#7b2fff'];
+    let trailCount = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      if (trailCount++ % 3 !== 0) return; // spawn every 3rd move event
+      const dot = document.createElement('div');
+      dot.className = 'trail-dot';
+      const size = Math.random() * 5 + 3;
+      const color = trailColors[Math.floor(Math.random() * trailColors.length)];
+      dot.style.cssText = `
+        left:${e.clientX}px;top:${e.clientY}px;
+        width:${size}px;height:${size}px;
+        background:${color};
+        opacity:0.7;
+        transition:opacity 0.5s,transform 0.5s;
+      `;
+      document.body.appendChild(dot);
+      requestAnimationFrame(() => {
+        dot.style.opacity = '0';
+        dot.style.transform = `translate(-50%,-50%) scale(0)`;
+      });
+      setTimeout(() => dot.remove(), 520);
+    });
   </script>
 
 </body>
