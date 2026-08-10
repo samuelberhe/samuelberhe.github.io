@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Engineer II · Readiness Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F6F8FA;
+  --ink:#0F1520; --ink-2:#3A4655; --muted:#6E7A8A;
+  --line:#D9DFE6; --line-soft:#E8ECF1;
+  --brand:#0E7C86; --brand-deep:#095A62; --brand-wash:#E2F1F2;
+  --crit:#C2213F; --high:#D2632A; --med:#B8901A; --low:#2C8A61; --info:#3B6FD0;
+  --shadow:0 1px 2px rgba(15,21,32,.05), 0 8px 24px -12px rgba(15,21,32,.18);
+  --radius:10px;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+html[data-theme="dark"]{
+  --bg:#0C1117; --surface:#141B24; --surface-2:#1A222D;
+  --ink:#E7EDF4; --ink-2:#B4C0CE; --muted:#7E8C9D;
+  --line:#26313D; --line-soft:#1E2833;
+  --brand:#3BC2CD; --brand-deep:#8EE3EA; --brand-wash:#123135;
+  --crit:#F2607C; --high:#EF9455; --med:#E0BA4A; --low:#4FC391; --info:#7AA5F0;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--body);
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+h1,h2,h3,h4{font-family:var(--display);font-weight:600;letter-spacing:-.015em;margin:0}
+a{color:var(--brand)}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.rail{
+  background:var(--surface); border-right:1px solid var(--line);
+  padding:20px 14px; display:flex; flex-direction:column; gap:6px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brandmark{display:flex;align-items:center;gap:9px;padding:0 8px 16px;margin-bottom:6px;border-bottom:1px solid var(--line-soft)}
+.brandmark .glyph{
+  width:26px;height:26px;border-radius:7px;background:var(--brand);
+  display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:13px;font-weight:600;flex:none;
+}
+html[data-theme="dark"] .brandmark .glyph{color:#08161a}
+.brandmark b{font-family:var(--display);font-size:14.5px;font-weight:600;letter-spacing:-.01em;display:block;line-height:1.2}
+.brandmark span{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.navlabel{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:14px 10px 5px}
+.navbtn{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:8px;color:var(--ink-2);font-size:14px;font-weight:500;
+  transition:background .13s,color .13s;
+}
+.navbtn:hover{background:var(--surface-2);color:var(--ink)}
+.navbtn[aria-current="true"]{background:var(--brand-wash);color:var(--brand-deep);font-weight:600}
+html[data-theme="dark"] .navbtn[aria-current="true"]{color:var(--brand-deep)}
+.navbtn .k{font-family:var(--mono);font-size:11px;color:var(--muted);width:13px;flex:none;text-align:center}
+.navbtn[aria-current="true"] .k{color:var(--brand)}
+.railfoot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:4px}
+.minibtn{
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);
+  padding:6px 10px;border-radius:6px;text-align:left;width:100%;
+}
+.minibtn:hover{background:var(--surface-2);color:var(--ink)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.view{padding:26px 34px 80px;max-width:1080px;width:100%;animation:rise .34s cubic-bezier(.2,.7,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- posture bar (signature) ---------- */
+.posture{
+  position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:1px solid var(--line);padding:12px 34px;
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.ring{width:52px;height:52px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:6;stroke-linecap:round}
+.ring .track{stroke:var(--line-soft)}
+.ring .fill{stroke:var(--score);transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.3,1),stroke .4s}
+.ring b{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);
+}
+.posture-meta{min-width:150px}
+.posture-meta .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.posture-meta .val{font-family:var(--display);font-size:17px;font-weight:600;color:var(--score);line-height:1.25}
+.posture-stats{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap}
+.pstat .n{font-family:var(--mono);font-size:16px;font-weight:600}
+.pstat .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- typography blocks ---------- */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:8px}
+.h-page{font-size:29px;line-height:1.15;letter-spacing:-.025em}
+.sub{color:var(--muted);max-width:62ch;margin:9px 0 0;font-size:14.5px}
+.divider{height:1px;background:var(--line);margin:26px 0}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+
+.topic-card{padding:15px 16px;text-align:left;display:flex;flex-direction:column;gap:9px;transition:transform .14s,box-shadow .14s,border-color .14s;width:100%}
+.topic-card:hover{transform:translateY(-2px);border-color:var(--brand);box-shadow:0 10px 26px -14px rgba(14,124,134,.5)}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.tc-num{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+.tc-title{font-family:var(--display);font-size:15.5px;font-weight:600;letter-spacing:-.01em;line-height:1.28}
+.tc-blurb{font-size:13px;color:var(--muted);line-height:1.5}
+.meter{height:4px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.tc-foot{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.05em}
+
+/* priority pills use severity scale */
+.pri{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.08em;padding:3px 7px;border-radius:5px;white-space:nowrap;flex:none}
+.pri-5{background:color-mix(in srgb,var(--crit) 13%,transparent);color:var(--crit)}
+.pri-4{background:color-mix(in srgb,var(--high) 14%,transparent);color:var(--high)}
+.pri-3{background:color-mix(in srgb,var(--info) 13%,transparent);color:var(--info)}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;
+  font-size:14px;font-weight:600;font-family:var(--body);
+  background:var(--brand);color:#fff;transition:filter .14s,transform .1s;
+}
+html[data-theme="dark"] .btn{color:#06171a}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--brand);color:var(--brand);filter:none}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+
+/* ---------- library ---------- */
+.acc{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;margin-bottom:9px}
+.acc-head{display:flex;align-items:center;gap:12px;width:100%;padding:13px 15px;text-align:left;cursor:pointer;list-style:none}
+.acc-head::-webkit-details-marker{display:none}
+.acc-head::marker{content:""}
+.acc-head:hover{background:var(--surface-2)}
+.acc-head .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:20px;flex:none}
+.acc-head .nm{font-family:var(--display);font-size:15px;font-weight:600;flex:1;letter-spacing:-.01em}
+.acc-head .chev{color:var(--muted);transition:transform .2s;font-size:12px;font-family:var(--mono)}
+.acc[open] .chev{transform:rotate(90deg)}
+.acc-body{padding:2px 15px 18px 47px;border-top:1px solid var(--line-soft)}
+.lede{font-size:14.5px;color:var(--ink-2);margin:14px 0 0}
+.onjob{
+  margin:14px 0 0;padding:11px 13px;background:var(--brand-wash);
+  border-left:2px solid var(--brand);border-radius:0 7px 7px 0;font-size:13.5px;color:var(--ink-2);
+}
+.onjob b{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--brand-deep);display:block;margin-bottom:4px}
+.mini-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+ul.pts{margin:0;padding-left:17px}
+ul.pts li{margin-bottom:6px;font-size:14px;color:var(--ink-2)}
+.termgrid{display:grid;gap:7px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.term{padding:9px 11px;background:var(--surface-2);border-radius:7px;font-size:13.2px;border:1px solid var(--line-soft)}
+.term b{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink);display:block}
+.term span{color:var(--muted)}
+
+/* ---------- drill / practice ---------- */
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 28px}
+.stage-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.qcount{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.qtext{font-family:var(--display);font-size:22px;line-height:1.32;letter-spacing:-.02em;margin:6px 0 0}
+.answer{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);animation:rise .28s ease}
+.answer .mini-h{margin-top:0}
+.selfrate{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}
+.rate{padding:9px 15px;border-radius:8px;border:1px solid var(--line);font-size:13.5px;font-weight:600;font-family:var(--body);transition:.14s}
+.rate[data-v="0"]:hover{border-color:var(--crit);color:var(--crit);background:color-mix(in srgb,var(--crit) 8%,transparent)}
+.rate[data-v="1"]:hover{border-color:var(--med);color:var(--med);background:color-mix(in srgb,var(--med) 10%,transparent)}
+.rate[data-v="2"]:hover{border-color:var(--low);color:var(--low);background:color-mix(in srgb,var(--low) 9%,transparent)}
+.progline{height:3px;background:var(--line-soft);border-radius:99px;margin-bottom:20px;overflow:hidden}
+.progline i{display:block;height:100%;background:var(--brand);transition:width .4s}
+.chiprow{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
+.chip{
+  font-size:12.5px;font-weight:500;padding:6px 11px;border-radius:99px;
+  border:1px solid var(--line);color:var(--ink-2);transition:.13s;font-family:var(--body);
+}
+.chip:hover{border-color:var(--brand)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+html[data-theme="dark"] .chip[aria-pressed="true"]{color:#06171a}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
+.tag.scenario{color:var(--high);border-color:color-mix(in srgb,var(--high) 30%,transparent)}
+.tag.deep{color:var(--info);border-color:color-mix(in srgb,var(--info) 30%,transparent)}
+.tag.behavioral{color:var(--low);border-color:color-mix(in srgb,var(--low) 30%,transparent)}
+
+/* ---------- flashcard ---------- */
+.flip{perspective:1400px;height:250px;margin:0 auto;max-width:560px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.3,.8,.3,1);transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px;text-align:center;gap:10px;
+}
+.face.back{transform:rotateY(180deg);background:var(--surface-2)}
+.face .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.face .t{font-family:var(--display);font-size:25px;font-weight:600;letter-spacing:-.02em}
+.face .d{font-size:15px;color:var(--ink-2);max-width:44ch;line-height:1.55}
+
+/* ---------- tables / plan ---------- */
+.tbl{width:100%;border-collapse:collapse;font-size:13.8px}
+.tbl th{
+  text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;padding:9px 12px;border-bottom:1px solid var(--line);
+}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl code{font-family:var(--mono);font-size:12.4px;color:var(--brand-deep);font-weight:500}
+.search{
+  width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-family:var(--body);font-size:14px;
+}
+.search:focus{outline:2px solid var(--brand);outline-offset:1px}
+.week{padding:16px 18px}
+.week h4{font-size:16px;margin-bottom:2px}
+.week .wlbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:9px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line-soft);font-size:13.8px;color:var(--ink-2);cursor:pointer}
+.task input{margin-top:4px;accent-color:var(--brand);flex:none;width:15px;height:15px;cursor:pointer}
+.task.done span{text-decoration:line-through;color:var(--muted)}
+.empty{padding:34px;text-align:center;color:var(--muted);font-size:14px}
+.note{font-size:12.6px;color:var(--muted);margin-top:10px}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;overflow-x:auto;gap:4px;padding:10px;border-right:none;border-bottom:1px solid var(--line);align-items:center}
+  .brandmark{border:none;padding:0 10px 0 4px;margin:0;flex:none}
+  .brandmark .txt{display:none}
+  .navlabel{display:none}
+  .navbtn{width:auto;white-space:nowrap;padding:7px 11px}
+  .navbtn .k{display:none}
+  .railfoot{margin:0 0 0 auto;flex-direction:row;border:none;padding:0}
+  .minibtn{width:auto}
+  .view{padding:20px 16px 70px}
+  .posture{padding:11px 16px;gap:12px}
+  .stage{padding:19px 17px}
+  .qtext{font-size:19px}
+  .acc-body{padding-left:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="rail">
+    <div class="brandmark">
+      <div class="glyph">S2</div>
+      <div class="txt"><b>Readiness Console</b><span>Sec Eng II</span></div>
+    </div>
+    <div class="navlabel">Prepare</div>
+    <button class="navbtn" data-view="overview"><span class="k">01</span>Overview</button>
+    <button class="navbtn" data-view="library"><span class="k">02</span>Topic library</button>
+    <button class="navbtn" data-view="drill"><span class="k">03</span>Guided study</button>
+    <div class="navlabel">Rehearse</div>
+    <button class="navbtn" data-view="interview"><span class="k">04</span>Interview practice</button>
+    <button class="navbtn" data-view="cards"><span class="k">05</span>Flashcards</button>
+    <div class="navlabel">Reference</div>
+    <button class="navbtn" data-view="acronyms"><span class="k">06</span>Acronym decoder</button>
+    <button class="navbtn" data-view="plan"><span class="k">07</span>4-week plan</button>
+    <div class="railfoot">
+      <button class="minibtn" id="themeBtn">◐ Theme</button>
+      <button class="minibtn" id="exportBtn">↓ Save progress</button>
+      <button class="minibtn" id="resetBtn">⟲ Reset progress</button>
+    </div>
+  </nav>
+  <div class="main">
+    <header class="posture" id="posture"></header>
+    <div id="view" class="view"></div>
+  </div>
+</div>
+<script>
+/* ============================================================
+   CONTENT — expanded from the Security Engineer II prep guide
+   ============================================================ */
+const TOPICS = [
+{
+  id:"cloud", n:1, title:"Cloud Fundamentals", pri:5,
+  blurb:"How compute, storage, networking and identity actually fit together in Azure, AWS and GCP.",
+  lede:"Everything else on this list sits on top of cloud primitives. If you can't picture how a VM talks to a database through a subnet and a security group, the rest of the security conversation has nothing to attach to. You don't need depth in all three clouds — pick one (Azure is the safest bet for this team) and learn the equivalents in the others.",
+  onjob:"We're securing workloads that other teams build. That means reading someone else's network diagram, spotting the storage account that's open to the internet, and knowing whether a finding is a real exposure or an internal-only resource behind a private endpoint.",
+  points:[
+    "The shared responsibility model: the cloud provider secures <em>of</em> the cloud, you secure what you put <em>in</em> it. The line moves depending on IaaS vs PaaS vs SaaS.",
+    "Networking is where most real exposure lives — VNet/VPC, subnets, NSGs/Security Groups, route tables, public IPs, private endpoints, and peering.",
+    "Compute forms: VMs, containers, serverless functions, managed Kubernetes. Each has a different attack surface and a different patching owner.",
+    "Storage: blob/S3 buckets, disks, managed databases. Public access, encryption at rest, and access keys are the recurring findings.",
+    "Regions and availability zones affect data residency and compliance, not just uptime.",
+    "Know the naming map: Azure VNet = AWS VPC = GCP VPC; Azure NSG ≈ AWS Security Group; Azure Blob = AWS S3 = GCS; Entra ID ≈ AWS IAM ≈ GCP Cloud Identity."
+  ],
+  terms:[
+    {t:"Shared responsibility model",d:"The split of security duties between cloud provider and customer; shifts with the service model."},
+    {t:"VNet / VPC",d:"A logically isolated private network inside the cloud where your resources live."},
+    {t:"NSG / Security Group",d:"Stateful allow-rules controlling inbound and outbound traffic to a subnet or resource."},
+    {t:"Private endpoint",d:"A private IP inside your network that reaches a PaaS service without traversing the public internet."},
+    {t:"Public IP exposure",d:"A resource reachable directly from the internet — the single most common critical cloud finding."},
+    {t:"Region / AZ",d:"Geographic and fault-isolated placement of resources; drives residency and resilience."}
+  ],
+  study:[
+    {q:"In one sentence, what does the shared responsibility model mean?",a:"The provider secures the underlying infrastructure (hardware, hypervisor, physical datacenter); the customer secures their own data, identities, configurations, and access. The more managed the service, the more the provider covers."},
+    {q:"Name the Azure, AWS, and GCP words for a private cloud network.",a:"Azure: Virtual Network (VNet). AWS: Virtual Private Cloud (VPC). GCP: VPC Network."},
+    {q:"Why is a public IP on a VM usually flagged as a risk?",a:"It puts the machine's open ports directly on the internet, where they're scanned constantly. Any unpatched service or weak credential becomes remotely reachable. The safer pattern is private networking plus a bastion, VPN, or a managed access service."},
+    {q:"What does a private endpoint solve?",a:"It lets you reach a PaaS service (storage, database, key vault) over a private IP inside your own network so traffic never crosses the public internet, and you can then disable public network access on that service entirely."}
+  ],
+  iq:[
+    {q:"Walk me through what happens, security-wise, when a developer spins up a web app with a database in the cloud.",lvl:"core",pts:["Where it lands: subscription/account, resource group, VNet and subnet","Network: is the app public or behind a load balancer/WAF; is the database private-only","Identity: does the app use a managed identity or a stored connection string","Data: encryption at rest and in transit, where backups go","Logging: are platform and application logs shipped somewhere we can query","Governance: does it match policy/IaC baselines, and will our CNAPP see it"]},
+    {q:"A scanner flags a storage account as publicly accessible. How do you decide how urgent it is?",lvl:"scenario",pts:["Confirm it's real — public network access vs anonymous container access are different things","Ask what's in it: is there sensitive or regulated data","Check access logs for signs anyone outside has read it","Determine the owner and the business purpose before demanding a change","Give the fix, not just the finding: disable public access, use private endpoint or SAS tokens with expiry","Escalate speed based on data sensitivity plus real exposure, not the scanner's default score"]},
+    {q:"How would you explain the difference between IaaS, PaaS, and SaaS to a non-technical stakeholder, and why it matters to us?",lvl:"core",pts:["Analogy is fine: renting land, renting an apartment, renting a hotel room","IaaS: we patch the OS. PaaS: provider patches, we own config and identity. SaaS: we own only data and access","It matters because it decides who is accountable when something is unpatched or misconfigured","SaaS is why SSPM tools exist — the config surface moved but didn't disappear"]}
+  ]
+},
+{
+  id:"iam", n:2, title:"Identity & Access Management", pri:5,
+  blurb:"Who can do what, where, and for how long — the real perimeter in cloud.",
+  lede:"In cloud environments identity replaced the network as the primary control plane. Nearly every serious cloud breach involves an over-permissioned identity, a leaked key, or a standing admin role that nobody removed. Interviewers push hard here because it's the highest-leverage thing a security engineer touches.",
+  onjob:"We review role assignments, hunt down over-privileged service principals, push teams from stored secrets toward managed identities, and argue for just-in-time admin instead of permanent Owner.",
+  points:[
+    "Least privilege: grant the minimum permission, at the narrowest scope, for the shortest time. Everything in IAM is a version of this.",
+    "RBAC assigns permissions through roles; ABAC adds conditions based on attributes like tags, device state, or location.",
+    "Human identities vs workload identities. Service accounts, service principals, and managed identities are non-human and usually the ones nobody audits.",
+    "Managed identities remove the stored credential entirely — the platform issues and rotates the token. Prefer them over app secrets.",
+    "MFA and Conditional Access enforce context: who, from where, on what device, to which app.",
+    "Privileged access should be just-in-time and time-bound (PIM in Azure), with approval and an audit trail — not a permanent Owner assignment.",
+    "Permission creep is the quiet failure mode. Access gets granted for a project and never revoked; access reviews exist to catch it."
+  ],
+  terms:[
+    {t:"RBAC",d:"Role-Based Access Control — permissions bundled into roles and assigned to identities at a scope."},
+    {t:"Least privilege",d:"Grant only the permissions actually needed to do the job, and nothing more."},
+    {t:"Service principal",d:"An identity representing an application or automation rather than a person."},
+    {t:"Managed identity",d:"A platform-managed workload identity with no secret for you to store, leak, or rotate."},
+    {t:"Conditional Access",d:"Policy that allows or blocks sign-in based on user, device, location, risk, and app."},
+    {t:"PIM / JIT access",d:"Privileged Identity Management — elevate to an admin role temporarily, with approval and expiry."},
+    {t:"CIEM",d:"Cloud Infrastructure Entitlement Management — analytics that find over-permissioned identities."},
+    {t:"Access review",d:"A periodic recertification where owners confirm who still needs which access."}
+  ],
+  study:[
+    {q:"What's the difference between authentication and authorization?",a:"Authentication proves who you are (credentials, MFA). Authorization decides what you're allowed to do once you're in (roles, permissions, policy). AuthN first, AuthZ second."},
+    {q:"Why is a managed identity better than an app secret in a config file?",a:"There's no credential to leak, commit to Git, or forget to rotate. The platform issues short-lived tokens automatically and access is controlled by role assignment instead of by whoever has the string."},
+    {q:"What is privilege creep and how do you fix it?",a:"Permissions accumulate over time as people change roles or finish projects, but nothing gets removed. Fixes: periodic access reviews, JIT elevation instead of standing roles, and CIEM tooling that compares granted permissions to permissions actually used."},
+    {q:"Give three signals a Conditional Access policy might evaluate.",a:"User or group membership, sign-in risk level, device compliance state, location or IP range, application being accessed, and client type. Any three of those."}
+  ],
+  iq:[
+    {q:"How would you approach reducing over-privileged access in a cloud environment you just inherited?",lvl:"scenario",pts:["Start with visibility: inventory identities, role assignments, and scopes before changing anything","Prioritize by blast radius: Owner/Contributor at subscription or management group level first","Use CIEM data — compare permissions granted vs permissions actually used in the last 90 days","Separate humans from workload identities; they need different remediation paths","Move standing admin to JIT/PIM with approval and expiry","Socialize with owners before revoking — breaking production loses you the mandate to keep going","Close the loop: access reviews on a schedule, plus policy so it doesn't regress"]},
+    {q:"A developer says they need Owner on the subscription to deploy. What do you say?",lvl:"scenario",pts:["Ask what specific operation is failing — nearly always it's one or two permissions, not Owner","Offer the narrowest role that covers it, or a custom role","Scope it down: resource group instead of subscription","Offer time-bound elevation if they truly need it for a migration","Frame it as unblocking them, not blocking them — you're finding the path that works","Document the exception with an expiry if you have to grant it"]},
+    {q:"What's the difference between RBAC and ABAC, and when would you reach for ABAC?",lvl:"deep",pts:["RBAC: permissions come from role assignment at a scope; simple and auditable","ABAC: adds conditions on attributes — resource tags, time, device, network","ABAC helps when RBAC would explode into hundreds of near-identical roles","Example: allow read on blobs only where the tag Project=Alpha","Trade-off: more expressive, harder to reason about and audit"]}
+  ]
+},
+{
+  id:"iac", n:3, title:"Infrastructure as Code (Terraform)", pri:5,
+  blurb:"Infrastructure defined in version-controlled files — and why that's a security win.",
+  lede:"IaC is the reason cloud security can scale. When infrastructure is code, a misconfiguration becomes a reviewable diff instead of a click nobody witnessed, and a fix applies to every future deployment rather than one resource. Terraform is the common denominator across clouds.",
+  onjob:"We scan Terraform in pull requests, write and tune the policies that block insecure patterns, and help teams fix findings before anything is deployed. We also chase drift — resources changed by hand in the portal that no longer match the code.",
+  points:[
+    "Declarative: you describe the desired end state, Terraform works out the changes. <code>init</code> → <code>plan</code> → <code>apply</code>.",
+    "State file records what Terraform believes exists. It contains sensitive values, so it belongs in a remote encrypted backend with locking — never in Git.",
+    "Modules are reusable building blocks. A hardened module is how you make the secure path the easy path.",
+    "Variables and outputs parameterize environments; secrets should come from a vault or pipeline secret store, never a committed .tfvars.",
+    "Drift: someone changes a resource manually and the code no longer matches reality. The next apply may revert it or fail.",
+    "Common misconfigurations: storage open to the public, 0.0.0.0/0 in a security group, unencrypted disks, logging disabled, over-broad IAM policies, hardcoded secrets.",
+    "IaC scanning is high-value because it's shift-left: catching it in a PR costs minutes; catching it in production costs a change request and a meeting."
+  ],
+  terms:[
+    {t:"Declarative",d:"You define the desired end state, not the steps to get there."},
+    {t:"State file",d:"Terraform's record of managed resources; sensitive, stored remotely with locking."},
+    {t:"Module",d:"A packaged, reusable set of Terraform resources — the vehicle for secure defaults."},
+    {t:"Plan",d:"A dry run showing exactly what will be created, changed, or destroyed."},
+    {t:"Drift",d:"Divergence between the deployed reality and what the code declares."},
+    {t:"Checkov / KICS",d:"Open-source scanners that check IaC files against security policies."},
+    {t:"Policy as code",d:"Security rules written as machine-checkable code (e.g. OPA/Rego, Sentinel)."}
+  ],
+  study:[
+    {q:"Why should the Terraform state file never be committed to Git?",a:"It stores resource attributes in plain text, which frequently includes secrets, connection strings, and keys. It also needs locking to prevent two applies at once. Use a remote backend like an encrypted storage account or S3 bucket with state locking and restricted access."},
+    {q:"What does terraform plan give you that's useful for security review?",a:"An exact preview of the resources to be created, changed, or destroyed before anything happens. You can review the diff, run policy checks against it, and catch a destructive or insecure change while it's still reversible."},
+    {q:"Name four misconfigurations an IaC scanner commonly catches.",a:"Publicly accessible storage, an inbound rule allowing 0.0.0.0/0 on a sensitive port, unencrypted disks or databases, diagnostic logging turned off, over-broad IAM roles, and hardcoded credentials in the template."},
+    {q:"Why is fixing something in IaC better than fixing it in the console?",a:"The console fixes one resource once. Fixing the module or template fixes every environment built from it, survives redeploys, is peer-reviewed, and leaves an audit trail in version control."}
+  ],
+  iq:[
+    {q:"How would you integrate IaC security scanning without the team hating you?",lvl:"scenario",pts:["Start in warn-only mode to gather a baseline and see the noise level","Tune out false positives and irrelevant rules before enforcing anything","Agree with engineering on which severities block a merge, in writing","Fail the pipeline only on the agreed set; report the rest","Put results in the PR where the developer already is, not in a separate console","Provide the fixed code snippet alongside the finding","Track exception requests with owners and expiry dates"]},
+    {q:"Terraform plan shows it will destroy a production database. Walk me through your reaction.",lvl:"scenario",pts:["Do not apply. Stop and read the plan output carefully","Figure out why: state drift, a changed immutable attribute, a resource renamed or moved","Check whether someone changed the resource by hand outside Terraform","Consider terraform state mv or an import instead of recreate","Verify backups and recovery point before any action","Loop in the owning team — this is a change-control conversation, not a solo fix"]},
+    {q:"What makes IaC scanning different from a cloud posture scan (CSPM)?",lvl:"deep",pts:["IaC scanning is pre-deployment, on files, in the PR — shift-left","CSPM is post-deployment, on live resources, continuous","IaC catches the template that will produce 40 bad resources; CSPM catches the 40 that already exist","You need both: not everything is deployed via IaC, and drift happens","Ideal loop: CSPM finds it in prod, you trace it back to the module, fix it upstream"]}
+  ]
+},
+{
+  id:"cnapp", n:4, title:"CNAPP — Prisma Cloud & Wiz", pri:5,
+  blurb:"The platforms that watch the whole cloud estate and tell you what's actually risky.",
+  lede:"CNAPP is the category that merged half a dozen older acronyms into one platform: posture, entitlements, vulnerabilities, containers, IaC, and runtime. Prisma Cloud and Wiz are the two you'll be asked about. The important idea isn't the feature list — it's risk prioritization: turning a million findings into the twelve that matter this week.",
+  onjob:"These are the daily driver tools. We triage findings, tune policies, chase down resource owners, build dashboards for leadership, and work with the vendors when detection is wrong or coverage is missing.",
+  points:[
+    "CSPM — Cloud Security Posture Management: continuously checks live cloud config against policy and compliance benchmarks.",
+    "CIEM — entitlement analytics: which identity can do what, and what it has actually used.",
+    "CWPP — workload protection: vulnerabilities and runtime behavior in VMs, containers, and functions.",
+    "IaC security: the same policies applied to templates before deployment.",
+    "Attack path analysis is the differentiator — combining exposure + vulnerability + excessive permission + sensitive data into one reachable chain. Wiz built its reputation here.",
+    "Wiz is agentless: it reads snapshots and cloud APIs, so coverage is fast and broad, but true runtime visibility is thinner.",
+    "Prisma Cloud spans agentless and agent-based (Defenders), with deeper runtime protection and container controls.",
+    "A single 'critical' CVE on an isolated internal box matters less than a medium on an internet-facing host with an admin role attached. That reasoning is the job."
+  ],
+  terms:[
+    {t:"CNAPP",d:"Cloud-Native Application Protection Platform — the umbrella covering CSPM, CIEM, CWPP, and IaC security."},
+    {t:"CSPM",d:"Continuous checking of cloud configuration against security and compliance policy."},
+    {t:"CIEM",d:"Entitlement management — finds identities with more permission than they use."},
+    {t:"CWPP",d:"Cloud Workload Protection — vulnerability and runtime coverage for VMs, containers, serverless."},
+    {t:"Attack path",d:"A chained sequence of weaknesses that together produce real, reachable risk."},
+    {t:"Agentless scanning",d:"Assessing workloads via snapshots and cloud APIs rather than installed software."},
+    {t:"Toxic combination",d:"Individually moderate issues that become critical when they occur on the same resource."}
+  ],
+  study:[
+    {q:"What does CSPM do in one sentence?",a:"It continuously evaluates live cloud resource configuration against security policies and compliance benchmarks, and reports or auto-remediates the gaps."},
+    {q:"What is attack path analysis and why does it beat a raw findings list?",a:"It links exposure, vulnerability, permissions, and data sensitivity into a chain an attacker could actually walk. Instead of ten thousand isolated findings, you get a handful of real routes to something valuable — and fixing one link breaks the whole path."},
+    {q:"Agentless vs agent-based scanning — the trade-off?",a:"Agentless deploys in hours and covers everything the cloud API can see, with no performance impact, but it's periodic and can't see live process behavior. Agents give real-time runtime detection and blocking, but need deployment, maintenance, and consume resources."},
+    {q:"Why can a 'medium' finding outrank a 'critical' one?",a:"Because severity scores describe the vulnerability in isolation, not your environment. A medium on an internet-facing host with a privileged role and sensitive data is a real path in. A critical on an isolated internal VM with no route to it is not urgent."}
+  ],
+  iq:[
+    {q:"Your CNAPP shows 8,000 open findings. Where do you start?",lvl:"scenario",pts:["Don't work the list top-down by severity — that's how teams burn out","Filter by exposure first: internet-facing, then identity-privileged, then sensitive data","Look for attack paths and toxic combinations rather than isolated issues","Group by root cause — one bad module or base image often explains hundreds of findings","Fix upstream: the image, the module, the policy","Agree SLAs by severity + exposure with engineering, and track the trend not the total","Report progress as risk reduced, not tickets closed"]},
+    {q:"How would you compare Prisma Cloud and Wiz?",lvl:"deep",pts:["Both are CNAPP: CSPM, CIEM, vuln management, IaC, container security","Wiz: agentless-first, very fast time-to-value, strong graph and attack path modeling, clean UX","Prisma Cloud: broader depth including agent-based Defenders, stronger runtime protection and container controls, deep compliance","Choice depends on whether you need runtime enforcement or breadth of visibility","Honest answer: many orgs run one as the system of record and use native cloud tools alongside","Show you'd evaluate on coverage, noise, integration with our pipelines, and owner routing"]},
+    {q:"A team says your CNAPP finding is a false positive. What do you do?",lvl:"scenario",pts:["Take it seriously — assume they might be right","Reproduce it: look at the actual resource config, not just the alert","Understand what the policy is checking and whether it fits the context","If it's genuinely false, document it, suppress with a reason, and raise it with the vendor","If it's real, explain the exploit path in their terms rather than quoting the policy ID","Either way, close the loop so trust in the tool survives"]}
+  ]
+},
+{
+  id:"devsecops", n:5, title:"DevSecOps Tooling — SAST, DAST, SCA, Secrets", pri:5,
+  blurb:"The scanner families, what each one actually catches, and where it fits in the pipeline.",
+  lede:"This is the acronym section, and interviewers use it as a quick competence check. The trick is not memorizing vendor names but knowing what each class of tool sees, what it's blind to, and where it belongs in the development lifecycle. Every one of them has a characteristic false-positive problem.",
+  onjob:"We own these scanners: onboarding repos, tuning rules, triaging results, chasing remediation, and reporting coverage. A lot of the job is making noisy tools trustworthy enough that developers act on them.",
+  points:[
+    "SAST — reads source code without running it. Catches injection, unsafe deserialization, hardcoded secrets, bad crypto. Runs early, in the IDE or PR. Prone to false positives because it lacks runtime context. <em>Checkmarx, Cycode, Fortify, Semgrep.</em>",
+    "DAST — attacks a running application from the outside. Catches auth flaws, misconfigured headers, XSS, exposed endpoints. No source needed, so few false positives, but needs a deployed environment and finds issues late. <em>HCL AppScan, Burp Suite, OWASP ZAP.</em>",
+    "SCA — inventories open-source dependencies and matches them to known CVEs, plus license risk. Most of a modern app is third-party code, so this is often the biggest real risk source. <em>Snyk, Mend, Black Duck, Cycode.</em>",
+    "IaC scanning — insecure infrastructure templates before deployment. <em>Checkov, KICS, Prisma Cloud, Wiz.</em>",
+    "Secrets scanning — API keys, tokens, passwords, certificates in code and history. Pre-commit hooks stop them; history scanning finds the ones already there. <em>GitLeaks, TruffleHog, GitHub Secret Scanning, Cycode.</em>",
+    "SSPM — misconfiguration in SaaS apps like Salesforce, Microsoft 365, Workday. Different surface, same posture idea. <em>AppOmni.</em>",
+    "Reachability analysis is the modern fix for SCA noise: is the vulnerable function actually called by your code?"
+  ],
+  terms:[
+    {t:"SAST",d:"Static Application Security Testing — scans source code without executing it."},
+    {t:"DAST",d:"Dynamic Application Security Testing — probes a running app from the outside."},
+    {t:"SCA",d:"Software Composition Analysis — finds vulnerable and non-compliant open-source dependencies."},
+    {t:"SSPM",d:"SaaS Security Posture Management — misconfiguration detection for SaaS platforms."},
+    {t:"Shift left",d:"Moving security checks earlier in the lifecycle, where fixes are cheap."},
+    {t:"False positive",d:"A reported issue that isn't actually exploitable in context."},
+    {t:"SBOM",d:"Software Bill of Materials — a manifest of every component in a build."},
+    {t:"Reachability",d:"Whether your code actually invokes the vulnerable path in a dependency."}
+  ],
+  study:[
+    {q:"SAST vs DAST in one line each.",a:"SAST reads the source code without running it and finds flaws early with more false positives. DAST attacks the running application from outside, finds fewer but more certain issues, and needs a deployed environment."},
+    {q:"Why is SCA often the largest source of real vulnerabilities?",a:"Most of a modern application is imported open-source code. Your team wrote maybe 10-20% of what ships. Every dependency brings its own transitive dependencies and their CVEs, and nobody reviews them line by line."},
+    {q:"A secret was committed and then deleted in the next commit. Is it safe?",a:"No. It's still in Git history and in every clone and fork. Removing the line does nothing. You must rotate the credential immediately — that's the actual remediation — then optionally purge the history."},
+    {q:"What does 'shift left' mean in practice?",a:"Run security checks as early as possible — IDE, pre-commit, pull request — instead of at a pre-release security review. A finding caught in a PR is a two-minute fix; the same finding in production is a change request, a ticket, and three meetings."},
+    {q:"What is SSPM and how is it different from CSPM?",a:"CSPM checks configuration of cloud infrastructure you provision. SSPM checks configuration of SaaS applications you subscribe to — sharing settings, external users, OAuth grants, admin roles in tools like Salesforce or Microsoft 365."}
+  ],
+  iq:[
+    {q:"Design a security scanning strategy for a team shipping to production daily.",lvl:"scenario",pts:["Map tools to lifecycle stages: secrets pre-commit, SAST + SCA + IaC in the PR, DAST against staging, CSPM continuous in prod","Decide gate vs report per tool — blocking on everything kills velocity and trust","Fast checks block; slow deep scans run nightly out of band","Findings surface in the PR and auto-create tickets with the right owner","Baseline existing debt separately so new code is held to a clean standard","Measure mean time to remediate and false positive rate, not scan count","Build an exception process with owner and expiry"]},
+    {q:"Developers are ignoring your scanner results. How do you fix that?",lvl:"scenario",pts:["Assume the tool is the problem first — measure the false positive rate","Tune aggressively and turn off rules that don't apply to the stack","Reduce volume: prioritize by reachability and exposure instead of raw severity","Meet them where they work — PR comments and IDE, not a separate portal","Ship the fix suggestion with the finding","Pick a friendly team, prove the workflow, let them advocate for you","Get leadership alignment on SLAs so it isn't optional, but earn credibility first"]},
+    {q:"Which would you deploy first at a company with none of these, and why?",lvl:"deep",pts:["Reasonable answers: secrets scanning (cheapest, highest immediate risk reduction) or SCA (biggest real vulnerability volume)","Justify with risk-to-effort, not personal preference","Secrets: a leaked key is instant, remote, no-exploit-needed compromise","SCA: high signal, easy to onboard, results are actionable with a version bump","Note that IaC scanning is close behind if the org is cloud-heavy","Show you'd confirm with actual environment data before deciding"]}
+  ]
+},
+{
+  id:"cicd", n:6, title:"CI/CD Security", pri:4,
+  blurb:"The pipeline is production. Whoever controls the build controls what ships.",
+  lede:"CI/CD is a high-value target because it holds credentials to every environment and it deploys code with no human in the loop. Supply-chain attacks like SolarWinds went through the build system, not the application. On this team CI/CD is also where the scanners live, so pipeline design is security design.",
+  onjob:"We build and maintain the security gates in Azure DevOps and GitHub Actions, define what blocks a merge, protect the pipeline's own credentials, and enforce branch protection and review requirements with engineering.",
+  points:[
+    "Branch protection: no direct pushes to main, required reviewers, required status checks, and signed commits where feasible.",
+    "Security gates decide what blocks. Be explicit and agreed: which severities fail a build, and who can override.",
+    "Pipeline secrets belong in a secret store or key vault with short-lived tokens — never in YAML, never in build logs.",
+    "Pin third-party actions and tasks to a commit SHA, not a floating tag, so an upstream compromise doesn't reach you.",
+    "Least privilege for the pipeline identity itself: separate service connections per environment, no single admin credential across dev/test/prod.",
+    "Protect self-hosted runners — they often hold cached credentials and network access to internal systems.",
+    "Artifact integrity: scan images before push, sign artifacts, and deploy only from a trusted registry.",
+    "Fast checks gate the PR; heavy scans run asynchronously so the pipeline stays usable."
+  ],
+  terms:[
+    {t:"CI/CD",d:"Continuous Integration / Continuous Delivery — automated build, test, and deploy."},
+    {t:"Security gate",d:"A pipeline check that must pass before code progresses."},
+    {t:"Branch protection",d:"Rules preventing unreviewed or direct changes to important branches."},
+    {t:"Service connection",d:"Stored credentials letting a pipeline authenticate to a cloud environment."},
+    {t:"Supply chain attack",d:"Compromising a dependency, tool, or build system to reach downstream targets."},
+    {t:"Pinning",d:"Locking a dependency or action to an exact immutable version or commit."},
+    {t:"Runner / agent",d:"The machine that executes pipeline jobs."}
+  ],
+  study:[
+    {q:"Why is the CI/CD pipeline such a high-value target?",a:"It holds credentials to every environment, it can push code to production without human approval, and its output is trusted downstream. Compromise the pipeline and you don't need to attack production directly — you just ship your change through the front door."},
+    {q:"Where should pipeline secrets live?",a:"In a managed secret store or key vault, injected at runtime, scoped to the specific pipeline, short-lived, and masked in logs. Better still, use workload identity federation so there's no long-lived secret at all."},
+    {q:"Why pin a GitHub Action to a SHA instead of a tag like @v3?",a:"Tags are mutable. Whoever owns the action can repoint v3 at malicious code and it flows into your build automatically. A commit SHA is immutable, so you only ever run the code you reviewed."},
+    {q:"What's a sensible rule for which findings block a build?",a:"Block on things that are fast to detect, unambiguous, and severe — exposed secrets, critical reachable vulnerabilities, high-severity IaC misconfigurations in production paths. Report everything else. The rule should be agreed with engineering and documented, with a defined override path."}
+  ],
+  iq:[
+    {q:"How would you secure an Azure DevOps or GitHub Actions pipeline?",lvl:"core",pts:["Protect the source: branch policies, required reviews, required checks, no direct push to main","Protect the identity: scoped service connections per environment, least privilege, no shared admin credential","Protect the secrets: key vault integration, short-lived tokens, log masking","Protect the supply chain: pin actions/tasks, use approved templates, verify artifacts","Protect the runners: patched, isolated, ideally ephemeral","Add the gates: secrets, SAST, SCA, IaC scanning with agreed blocking rules","Log and monitor pipeline changes — a YAML edit is a security-relevant event"]},
+    {q:"Someone needs to ship an urgent hotfix and the security gate is failing. What happens?",lvl:"scenario",pts:["First find out what's failing and whether it's related to the hotfix","If it's a pre-existing finding, don't hold the fix hostage to unrelated debt","There should already be a documented break-glass path — approval by a named role, logged","Grant the exception with an expiry and a tracked follow-up ticket","Review it afterward: why did the gate fire now, and was the process usable","If break-glass is being used weekly, the gating rules are wrong, not the developers"]}
+  ]
+},
+{
+  id:"siem", n:7, title:"SIEM & Monitoring (Splunk)", pri:5,
+  blurb:"Collecting logs, searching them under pressure, and turning patterns into alerts.",
+  lede:"A SIEM centralizes logs from everywhere so you can correlate across systems and detect what no single source shows. Splunk is the one named in the guide. You don't need to be an SPL expert for a Security Engineer II interview — you need to show you understand the pipeline from log source to alert to investigation, and that you can write a basic search.",
+  onjob:"We onboard log sources, build dashboards leadership actually reads, write and tune detections, and pull the timeline together when something needs investigating.",
+  points:[
+    "The chain: collect → normalize/parse → index → search → correlate → alert → investigate.",
+    "Coverage is the hard part. A detection can't fire on a log source you never onboarded.",
+    "Basic SPL shape: <code>index=... sourcetype=... | stats count by user | where count > 10</code>. Search first, then transform.",
+    "Correlation is the point — a failed login means nothing; failed logins across 40 accounts from one IP followed by one success means everything.",
+    "Alert tuning matters more than alert creation. An alert nobody trusts is worse than no alert.",
+    "Dashboards serve different audiences: an analyst wants raw detail, leadership wants trend and coverage.",
+    "Retention and cost drive real decisions — verbose sources are expensive, so you choose what to index hot vs cold."
+  ],
+  terms:[
+    {t:"SIEM",d:"Security Information and Event Management — central log aggregation, correlation, and alerting."},
+    {t:"Index",d:"In Splunk, the repository where ingested events are stored and searched."},
+    {t:"Sourcetype",d:"Label describing a log's format so Splunk parses fields correctly."},
+    {t:"SPL",d:"Search Processing Language — Splunk's query language."},
+    {t:"Correlation rule",d:"Logic combining multiple events into one meaningful detection."},
+    {t:"Alert fatigue",d:"Analysts ignoring alerts because too many are noise."},
+    {t:"Use case",d:"A defined threat scenario the detection is built to catch."}
+  ],
+  study:[
+    {q:"What does a SIEM give you that individual tool consoles don't?",a:"Correlation across sources and a single searchable timeline. The cloud console shows a role assignment, the identity provider shows a sign-in, the endpoint shows a process — only together do they tell you an account was compromised and escalated."},
+    {q:"Write the shape of a Splunk search that finds accounts with more than 10 failed logins.",a:"index=security sourcetype=auth action=failure | stats count by user | where count > 10 — search terms first, then pipe into a transforming command, then filter the result."},
+    {q:"Why is alert tuning as important as alert writing?",a:"A detection that fires 200 times a day with 199 false positives trains analysts to ignore it, including the one time it's real. Tuning preserves the trust that makes the alert useful at all."},
+    {q:"What limits what a SIEM can detect?",a:"Log source coverage and log quality. If the source was never onboarded, or the fields aren't parsed, or retention expired, no detection logic can help you. Coverage gaps are the first thing to audit."}
+  ],
+  iq:[
+    {q:"How would you build a detection for a new threat scenario?",lvl:"scenario",pts:["Define the behavior precisely — what does the attacker actually do","Identify which log sources would show it, and confirm we ingest them","Check field quality and parsing before writing logic","Write the search, run it historically to see baseline volume","Tune thresholds and exclude known-good behavior","Document the alert: what it means, severity, and the response steps","Deploy in monitor-only first, then enable, then review after a few weeks"]},
+    {q:"An alert fires at 2am for suspicious sign-ins. Walk me through your investigation.",lvl:"scenario",pts:["Confirm scope: which accounts, how many, what time window","Establish the baseline — is this normal for that user, location, device","Pivot across sources: sign-in logs, then what the account did after","Look for follow-on actions — role changes, key access, data reads, new persistence","Decide containment: disable session, force password reset, revoke tokens","Contact the user through a verified channel","Document the timeline as you go, not afterward","Escalate per the IR plan if it's confirmed"]}
+  ]
+},
+{
+  id:"vulnmgmt", n:8, title:"Vulnerability Management", pri:4,
+  blurb:"Finding, prioritizing, fixing and verifying — the endless loop.",
+  lede:"Vulnerability management is a program, not a scan. Anyone can produce a list of CVEs; the skill is deciding what to fix first with limited engineering time and proving the risk actually went down. Interviewers probe this to see whether you think in risk or in ticket counts.",
+  onjob:"We run the scanning cadence, translate raw findings into prioritized work for the owning teams, negotiate SLAs, handle exceptions, and verify fixes actually landed.",
+  points:[
+    "Lifecycle: discover assets → scan → prioritize → assign to owner → remediate → verify → report.",
+    "CVE is the identifier. CVSS is the base severity score, 0–10. Neither knows anything about your environment.",
+    "Real prioritization = CVSS + exploitability (is there a working exploit? is it in CISA KEV?) + exposure (internet-facing?) + asset value + compensating controls. EPSS estimates exploitation probability.",
+    "Asset inventory is the foundation. You cannot patch what you don't know exists — this is usually the weakest link.",
+    "False positives are inevitable. Validate before you send an engineer chasing a phantom, or you lose credibility.",
+    "When patching isn't possible: compensating controls — network isolation, WAF rule, disable the feature, restrict access — plus a documented, time-bound exception.",
+    "Verification closes the loop. A ticket marked done is not evidence; a rescan is.",
+    "Report trend and risk reduction over time, not raw open counts, which never go to zero."
+  ],
+  terms:[
+    {t:"CVE",d:"Common Vulnerabilities and Exposures — the unique public ID for a known flaw."},
+    {t:"CVSS",d:"Common Vulnerability Scoring System — a 0-10 base severity rating."},
+    {t:"EPSS",d:"Exploit Prediction Scoring System — probability a CVE will be exploited in the wild."},
+    {t:"KEV",d:"CISA's Known Exploited Vulnerabilities catalog — confirmed exploited in the real world."},
+    {t:"Zero-day",d:"A vulnerability exploited before a patch exists."},
+    {t:"Compensating control",d:"An alternative mitigation when the actual fix isn't available yet."},
+    {t:"SLA",d:"Agreed maximum time to remediate, usually tiered by severity."},
+    {t:"Exception",d:"A documented, approved, time-bound acceptance of a known risk."}
+  ],
+  study:[
+    {q:"Difference between CVE and CVSS?",a:"CVE is the identifier — a unique name for a specific vulnerability. CVSS is the scoring system that rates its severity from 0 to 10 based on characteristics like attack vector and impact. One names it, the other rates it."},
+    {q:"Why isn't CVSS enough to prioritize?",a:"CVSS scores the vulnerability in isolation with no knowledge of your environment. It doesn't know whether the system is internet-facing, whether an exploit exists, whether the vulnerable component is even reachable, or how valuable the asset is. You have to layer environment context on top."},
+    {q:"What do you do about a critical CVE with no available patch?",a:"Apply compensating controls: isolate the system, restrict network access, disable the vulnerable feature or module, add detection for exploitation attempts. Document a time-bound exception with an owner, and monitor for the patch."},
+    {q:"How do you prove remediation actually happened?",a:"Rescan and confirm the finding is gone. A closed ticket is a claim; a clean rescan is evidence. Track verified closure rate as a metric."}
+  ],
+  iq:[
+    {q:"How would you build a vulnerability management program from scratch?",lvl:"scenario",pts:["Asset inventory first — you can't secure unknown assets, and coverage gaps invalidate everything downstream","Deploy scanning across infrastructure, applications, containers, and dependencies","Define a risk-based prioritization model, not raw CVSS","Establish severity-tiered SLAs, agreed with engineering leadership, not imposed","Route findings automatically to the owning team with context and a suggested fix","Build the exception process before you need it","Verify with rescans; report trend, SLA adherence, and mean time to remediate","Feed root causes back upstream — golden images, base images, modules"]},
+    {q:"Log4Shell drops on a Friday afternoon. What do you do?",lvl:"scenario",pts:["Establish exposure first: where is the library used, including transitive dependencies and vendor products","Use SCA and SBOM data if we have it; ask vendors in parallel","Prioritize internet-facing and privileged systems","Apply the fastest safe mitigation while patching proceeds — WAF rules, flag changes, network restriction","Communicate early and clearly to leadership: what we know, what we don't, what we're doing","Hunt for signs of prior exploitation, not just patch","Track it as an incident with a single owner and a running timeline"]},
+    {q:"Engineering says they don't have capacity to fix your findings this quarter. What now?",lvl:"scenario",pts:["Don't escalate first — understand their actual constraints and roadmap","Cut the list down to what genuinely matters: exposure and exploitability, not everything","Look for batch fixes: one base image or module update closing hundreds of findings","Offer to do the work where you can — draft the PR, test the upgrade","Propose compensating controls for the rest","Make the risk visible to whoever owns the decision, in business terms, and let them accept it formally","Document the accepted risk with an expiry rather than letting it disappear"]}
+  ]
+},
+{
+  id:"k8s", n:9, title:"Containers & Kubernetes", pri:4,
+  blurb:"Images, registries, pods, and the misconfigurations that make clusters escapable.",
+  lede:"Containers changed where vulnerabilities live: most of what's in your image came from a base image someone else built. Kubernetes then adds its own control plane, its own RBAC, and a large set of defaults that are convenient rather than secure. Both show up constantly in cloud security work.",
+  onjob:"We scan images in the registry and in the pipeline, review cluster configuration and Kubernetes RBAC, keep secrets out of manifests and environment variables, and push teams toward smaller hardened base images.",
+  points:[
+    "An image is layers. Vulnerabilities usually come from the base image and OS packages, not the application code on top.",
+    "Use minimal bases — distroless or Alpine — because fewer packages means a smaller attack surface and far fewer CVEs to triage.",
+    "Never bake secrets into images. They persist in layers and in the registry even if a later layer deletes them.",
+    "Scan at build (pipeline), at rest (registry), and at runtime — new CVEs appear against images that were clean at build time.",
+    "Kubernetes objects: pod (the unit), deployment (manages replicas), service (stable networking), ingress (external HTTP entry), namespace (logical isolation).",
+    "Cluster security essentials: no privileged containers, run as non-root, read-only root filesystem, drop Linux capabilities, resource limits, network policies for pod-to-pod traffic.",
+    "Kubernetes RBAC is separate from cloud IAM. Both matter, and cluster-admin bindings are the thing to hunt for.",
+    "Kubernetes Secrets are base64-encoded, not encrypted, by default — enable encryption at rest or use an external vault via CSI driver."
+  ],
+  terms:[
+    {t:"Image / layer",d:"A packaged filesystem plus metadata, built as stacked immutable layers."},
+    {t:"Registry",d:"Where images are stored and pulled from (ACR, ECR, Docker Hub)."},
+    {t:"Pod",d:"The smallest deployable unit in Kubernetes; one or more containers sharing network and storage."},
+    {t:"Namespace",d:"A logical partition inside a cluster used for isolation and scoping."},
+    {t:"Privileged container",d:"A container with host-level capabilities — a container escape waiting to happen."},
+    {t:"Network policy",d:"Rules controlling which pods may talk to which; default is allow-all."},
+    {t:"Admission controller",d:"A gate that validates or mutates objects before they're admitted to the cluster."},
+    {t:"Distroless",d:"A base image containing only the app and its runtime, no shell or package manager."}
+  ],
+  study:[
+    {q:"Where do most container vulnerabilities actually come from?",a:"The base image and its OS packages. Your application code is a thin layer on top. Switching to a minimal or distroless base often removes the majority of findings without touching the application at all."},
+    {q:"Why is a privileged container dangerous?",a:"It runs with host-level capabilities and largely removes the isolation boundary. If it's compromised, the attacker can reach the host node and from there potentially the whole cluster. It's a direct container-escape path."},
+    {q:"Are Kubernetes Secrets encrypted?",a:"By default they're only base64-encoded in etcd, which is encoding, not encryption. You need encryption at rest enabled on etcd, or better, an external secret store mounted through a CSI driver, plus RBAC restricting who can read secrets."},
+    {q:"What does a network policy do and what's the default?",a:"It controls which pods can communicate with which other pods and endpoints. The default in Kubernetes is allow-all — any pod can reach any other pod — so a deny-by-default policy per namespace is a major hardening step."},
+    {q:"Why scan images in the registry and not just at build?",a:"An image that was clean at build time becomes vulnerable when a new CVE is published against a package it contains. Continuous registry scanning catches that; a one-time build scan doesn't."}
+  ],
+  iq:[
+    {q:"How do you secure a container from build through runtime?",lvl:"core",pts:["Build: minimal trusted base image, pinned versions, no secrets, multi-stage builds, non-root user","Pipeline: scan for vulnerabilities and secrets, fail on agreed severities, sign the image","Registry: private registry, access control, continuous rescanning of stored images","Deploy: admission control to reject privileged or unsigned images, enforce security context","Runtime: read-only root FS, dropped capabilities, resource limits, network policies, runtime threat detection","Ongoing: rebuild on base image updates rather than patching live containers"]},
+    {q:"A pod is running as root with hostPath mounted. Why is that a problem, and how would you handle it?",lvl:"scenario",pts:["hostPath mounts the node's filesystem into the pod — combined with root, that's effectively node access","Attack path: compromise the app, read or write host files, potentially reach kubelet credentials and the cluster","First understand why it's configured that way — sometimes it's a legitimate agent","Offer the alternative: proper volume types, a sidecar, or a scoped read-only mount","Enforce going forward with admission policy so new workloads can't do it","Fix the existing one with the owning team, not unilaterally in production"]}
+  ]
+},
+{
+  id:"automation", n:10, title:"Automation, APIs & Postman", pri:4,
+  blurb:"Scripting, REST, JSON — how security work stops being manual.",
+  lede:"You are not expected to be a software engineer. You are expected to be able to pull data from an API, loop over it, and produce something useful — because security at scale is impossible by hand. Interviewers usually just want to see that you're comfortable reading JSON and calling an endpoint.",
+  onjob:"We pull findings from Wiz or Prisma via API, cross-reference against our asset list, push tickets into Azure DevOps, and automate the reporting nobody wants to do manually every week.",
+  points:[
+    "Pick one language and be fluent enough to be useful. Python is the common choice; PowerShell for Azure and Windows; Bash for glue.",
+    "REST basics: GET reads, POST creates, PUT replaces, PATCH updates partially, DELETE removes.",
+    "Status codes you should know cold: 200 OK, 201 Created, 400 bad request, 401 unauthenticated, 403 authenticated but not allowed, 404 not found, 429 rate limited, 500 server error.",
+    "Auth patterns: API key in a header, bearer token, OAuth 2.0 client credentials for service-to-service.",
+    "JSON is the data format — objects, arrays, nesting. Being able to navigate a nested response is the actual skill.",
+    "Postman for exploring an API interactively: build the request, set auth, inspect the response, then translate it into code.",
+    "Handle pagination and rate limits, or your script silently gets 10% of the data.",
+    "Never hardcode credentials in a script. Environment variables, a key vault, or a managed identity."
+  ],
+  terms:[
+    {t:"REST API",d:"An HTTP interface where URLs identify resources and verbs define the action."},
+    {t:"Endpoint",d:"A specific URL path exposing one resource or operation."},
+    {t:"Bearer token",d:"A credential sent in the Authorization header that grants access for its lifetime."},
+    {t:"OAuth 2.0",d:"A delegated authorization framework; client credentials flow is the service-to-service pattern."},
+    {t:"JSON",d:"Structured text data format of objects, arrays, and key-value pairs."},
+    {t:"Pagination",d:"Splitting large result sets across pages you must iterate to get everything."},
+    {t:"Rate limiting",d:"Server-side caps on request volume, signalled by HTTP 429."},
+    {t:"Idempotent",d:"An operation that produces the same result whether run once or many times."}
+  ],
+  study:[
+    {q:"What's the difference between 401 and 403?",a:"401 Unauthorized means the request isn't authenticated — bad, missing, or expired credentials. 403 Forbidden means you are authenticated but this identity isn't permitted to do that. 401 is 'who are you', 403 is 'not allowed'."},
+    {q:"POST vs PUT?",a:"POST creates a new resource and isn't idempotent — send it twice and you may get two records. PUT replaces a resource at a known location and is idempotent — sending it twice leaves the same end state."},
+    {q:"You get a 429 from an API. What now?",a:"You're rate limited. Back off and retry — ideally exponential backoff, and respect the Retry-After header if present. Also reduce request volume: batch, cache, or use a bulk endpoint instead of one call per item."},
+    {q:"Describe a realistic security automation you'd write.",a:"Pull open critical findings from the CNAPP API on a schedule, enrich each with resource owner from tags or the CMDB, filter out ones with an approved exception, create or update an Azure DevOps work item per owner, and post a weekly summary to Teams. Manual today, five minutes daily once automated."}
+  ],
+  iq:[
+    {q:"Describe something you'd automate in a security team's workflow and how you'd build it.",lvl:"scenario",pts:["Name a real repetitive task: finding triage, evidence collection, access review reporting","Identify the data sources and their APIs","Auth with a service identity holding only read permissions needed","Handle pagination, rate limits, and failures — log and retry rather than dying silently","Output somewhere people already look: a ticket, a dashboard, a channel","Secrets from a vault, code in version control, run in a pipeline on a schedule","Mention idempotency — reruns shouldn't create duplicate tickets"]},
+    {q:"How would you use Postman to test an API you've never seen?",lvl:"core",pts:["Read the docs and find the auth method and base URL","Set up an environment with variables for base URL and token so nothing is hardcoded","Start with a simple GET to confirm auth works and see the response shape","Inspect status code, headers, and JSON structure before building anything","Test each verb: read, create, update, delete on a safe test object","Check error behavior deliberately — bad token, bad ID, malformed body","Save the working collection, then generate code from it as a starting point"]}
+  ]
+},
+{
+  id:"pm", n:11, title:"Project Management, Agile & ADO", pri:4,
+  blurb:"Running the work, tracking it, and telling people where it stands.",
+  lede:"Security Engineer II is where the job starts including ownership. You'll be handed a tool rollout or a remediation campaign and expected to plan it, drive it, and report on it. This section is on the list because it's often the difference between two candidates with identical technical answers.",
+  onjob:"Work lives in Azure DevOps. Security initiatives run as epics and features broken into stories, tracked on a board, reviewed in sprint ceremonies, and reported up as status.",
+  points:[
+    "The core loop: define scope and outcome → break into tasks → sequence by dependency → assign owners → track → communicate status → close.",
+    "Azure DevOps hierarchy: Epic → Feature → User Story → Task. Backlogs hold the work, boards visualize the flow.",
+    "Agile means short iterations with working outcomes and adjustment based on feedback. Scrum is one specific implementation of it.",
+    "Scrum ceremonies: sprint planning (what we commit to), daily standup (progress, plan, blockers), backlog refinement (get future work ready), sprint review or demo (show the outcome), retrospective (improve the process).",
+    "Roles: Product Owner sets priority, Scrum Master removes obstacles, the team delivers.",
+    "Dependencies and risks are what actually derail security projects — vendor timelines, another team's roadmap, a change freeze.",
+    "Microsoft Project is for the waterfall-shaped work: schedules, milestones, critical path, longer horizons.",
+    "Status communication has three parts: where we are, what's blocked, and what I need from you. Escalate early — surprises are the failure."
+  ],
+  terms:[
+    {t:"Epic",d:"A large body of work spanning multiple sprints, broken into features."},
+    {t:"User story",d:"A small unit of value described from the user's perspective."},
+    {t:"Backlog",d:"The prioritized queue of work not yet started."},
+    {t:"Sprint",d:"A fixed-length iteration, typically two weeks, ending in a reviewable outcome."},
+    {t:"Standup",d:"A short daily sync on progress, plan, and blockers."},
+    {t:"Retrospective",d:"End-of-sprint review of how the team worked, aimed at process improvement."},
+    {t:"Blocker",d:"Something preventing progress that needs escalation or a decision."},
+    {t:"Milestone",d:"A dated checkpoint marking a significant deliverable."}
+  ],
+  study:[
+    {q:"Name the four Azure DevOps work item levels in order.",a:"Epic → Feature → User Story → Task. Epics are the big initiative, features are meaningful chunks, stories are units of deliverable value, tasks are the individual pieces of work."},
+    {q:"What are the five Scrum ceremonies and their purpose?",a:"Sprint planning — decide what we commit to. Daily standup — sync on progress and blockers. Backlog refinement — prepare upcoming work. Sprint review/demo — show what was delivered. Retrospective — improve how the team works."},
+    {q:"What belongs in a good status update?",a:"Where the work stands against the plan, what's blocked and what you need to unblock it, what's changed in risk or timeline, and what happens next. Short, specific, and no surprises."},
+    {q:"When would you use Microsoft Project instead of a sprint board?",a:"When the work is schedule-driven with hard dates and heavy dependencies — a multi-quarter tool migration, an audit deadline, a datacenter exit. Gantt views and critical path matter there; a two-week sprint board doesn't capture them."}
+  ],
+  iq:[
+    {q:"You're given ownership of rolling out a new security scanning tool. How do you run it?",lvl:"scenario",pts:["Define the outcome and success criteria before touching the tool","Identify stakeholders early: engineering leads, platform team, the vendor, and whoever funds it","Break into phases: pilot, tune, expand, enforce — each with an exit criterion","Create it in ADO as an epic with features per phase and stories per team onboarded","Name the dependencies and risks up front — vendor support, engineering capacity, change freezes","Pilot with a friendly team, measure noise, tune before expanding","Report status on a regular cadence with a consistent format","Define what 'done' means: coverage percentage plus findings being acted on, not just installed"]},
+    {q:"Your project is going to miss its date. What do you do?",lvl:"scenario",pts:["Raise it as soon as you know — early bad news is manageable, late bad news is a failure","Come with the cause, the options, and a recommendation, not just the problem","Options usually reduce to: move the date, cut scope, add help, or accept a lower bar","Quantify the impact of each option honestly","Let the decision-maker decide, then document what was agreed","Adjust the plan and communicate the new baseline to everyone affected"]}
+  ]
+},
+{
+  id:"bestpractice", n:12, title:"Security Best Practices & OWASP", pri:4,
+  blurb:"The principles behind every control, and the vulnerabilities that keep recurring.",
+  lede:"Tools change, principles don't. When you get a question about a technology you've never touched, these principles are what let you reason your way to a sensible answer — which is exactly what an interviewer is testing. The OWASP Top 10 is the standard reference for web application risk.",
+  onjob:"These are the arguments we make in design reviews. When a team proposes something, we're checking it against least privilege, defense in depth, encryption, logging, and whether the failure mode is safe.",
+  points:[
+    "Least privilege — minimum access, narrowest scope, shortest duration.",
+    "Defense in depth — layered controls, so one failure isn't a breach.",
+    "Zero Trust — never trust based on network location; verify explicitly, assume breach, and continuously validate every request.",
+    "Encryption in transit (TLS) and at rest, with key management and rotation that's actually practiced.",
+    "Secrets management — centralized vault, short-lived credentials, automated rotation, no secrets in code or config.",
+    "Fail securely — when something breaks, it should deny, not open.",
+    "Logging and monitoring — an undetected control failure is the same as no control.",
+    "Secure SDLC — security embedded from design through operation, not bolted on before release.",
+    "OWASP Top 10 (2021): Broken Access Control · Cryptographic Failures · Injection · Insecure Design · Security Misconfiguration · Vulnerable and Outdated Components · Identification and Authentication Failures · Software and Data Integrity Failures · Security Logging and Monitoring Failures · Server-Side Request Forgery."
+  ],
+  terms:[
+    {t:"Defense in depth",d:"Multiple independent layers of control so one failure isn't fatal."},
+    {t:"Zero Trust",d:"Verify explicitly, use least privilege, assume breach — no implicit network trust."},
+    {t:"Broken access control",d:"Users acting outside their permissions; #1 on the OWASP Top 10."},
+    {t:"Injection",d:"Untrusted input interpreted as a command or query (SQLi, command injection)."},
+    {t:"SSRF",d:"Server-Side Request Forgery — tricking a server into making attacker-chosen requests, often to cloud metadata."},
+    {t:"Fail secure",d:"On error, deny access rather than allow it."},
+    {t:"Secure SDLC",d:"Security integrated across the whole development lifecycle."},
+    {t:"Key rotation",d:"Regularly replacing keys to limit the value and lifetime of a compromised one."}
+  ],
+  study:[
+    {q:"Explain defense in depth with an example.",a:"Layered controls so no single failure causes a breach. A database might sit in a private subnet, behind a security group, requiring authenticated access via managed identity, encrypted at rest, with all queries logged and anomalies alerted. An attacker must defeat several independent controls."},
+    {q:"What are the three principles of Zero Trust?",a:"Verify explicitly — authenticate and authorize on every request using all available signals. Use least privilege — just-in-time and just-enough access. Assume breach — segment, encrypt, monitor, and design as if the attacker is already inside."},
+    {q:"Why is SSRF especially dangerous in cloud environments?",a:"Cloud instances expose an internal metadata endpoint that returns credentials for the attached identity. If an attacker can make the server issue requests of their choosing, they can hit that endpoint and steal working cloud credentials. IMDSv2 and equivalents exist specifically to mitigate this."},
+    {q:"What does 'fail securely' mean?",a:"When a control errors or a dependency is unavailable, the system should default to denying access rather than allowing it. An authorization service timing out should not result in everyone getting through."},
+    {q:"Name the top three OWASP Top 10 categories.",a:"Broken Access Control, Cryptographic Failures, and Injection — in that order for the 2021 list."}
+  ],
+  iq:[
+    {q:"You're reviewing a design for a new internet-facing application. What do you look for?",lvl:"scenario",pts:["Data first: what's stored, how sensitive, what regulations apply","AuthN and AuthZ model — how is access decided and enforced server-side","Network exposure: what's public, what's private, is there a WAF","Identity for the workload — managed identity over stored secrets","Encryption in transit and at rest, and where keys live","Input validation and output encoding against injection","Logging: will we be able to investigate an incident using what they emit","Failure modes — what happens when a dependency is down","Threat model the abuse cases, not just the happy path"]},
+    {q:"Explain SQL injection and its fix to a non-technical manager.",lvl:"core",pts:["Analogy: the app pastes user input straight into a database instruction, so input can change the instruction","Impact in business terms: read the whole customer table, delete data, sometimes take over the server","Fix: parameterized queries — the database is told what's instruction and what's data, separately","Supporting layers: input validation, least-privilege database account, WAF","Note it's still on the OWASP Top 10 after 20 years because it's easy to reintroduce","Keep it plain — no jargon, no code, check they followed"]}
+  ]
+},
+{
+  id:"ir", n:13, title:"Incident Response", pri:4,
+  blurb:"The six phases, and what you actually do in each.",
+  lede:"Even if you're not on the IR team, you'll be pulled into incidents as the person who understands the cloud environment. Interviewers want to see structured thinking under pressure and the judgment to know that containment beats curiosity.",
+  onjob:"We provide cloud context during incidents: what that resource is, who owns it, what identity it runs as, and what it could reach. We also feed lessons learned back into detections and policy.",
+  points:[
+    "Preparation — plans, runbooks, contacts, tooling, log coverage, and practice. The phase that determines how the other five go.",
+    "Detection & Analysis — validate it's real, determine scope and severity, and start the timeline immediately.",
+    "Containment — stop the spread. Short-term (isolate, disable, revoke tokens) then longer-term stabilization while you investigate.",
+    "Eradication — remove the root cause: malware, persistence mechanisms, backdoored accounts, the vulnerability that let them in.",
+    "Recovery — restore to known-good, verify integrity, and monitor closely for recurrence.",
+    "Lessons Learned — blameless post-incident review producing concrete, owned action items with dates.",
+    "In cloud, containment often means revoking tokens and disabling identities, not unplugging a machine. Snapshot before you destroy.",
+    "Communication is a workstream of its own: technical responders, leadership, legal, and possibly regulators have different needs and cadences."
+  ],
+  terms:[
+    {t:"IR plan",d:"The documented procedure for handling security incidents."},
+    {t:"Containment",d:"Limiting an incident's spread and impact before eradicating it."},
+    {t:"Eradication",d:"Removing the attacker and the root cause from the environment."},
+    {t:"IOC",d:"Indicator of Compromise — an artifact suggesting a breach (IP, hash, domain)."},
+    {t:"Chain of custody",d:"Documented handling of evidence to keep it defensible."},
+    {t:"Blast radius",d:"The scope of what a compromised resource or identity could reach."},
+    {t:"Post-incident review",d:"Blameless analysis producing improvement actions."},
+    {t:"MTTD / MTTR",d:"Mean time to detect / mean time to respond — the core IR metrics."}
+  ],
+  study:[
+    {q:"List the six IR phases in order.",a:"Preparation, Detection & Analysis, Containment, Eradication, Recovery, and Lessons Learned."},
+    {q:"Why is preparation the most important phase?",a:"Everything else depends on it. Whether you have logs, a plan, contact lists, tested runbooks, and permission to act determines whether the incident is a two-hour containment or a two-week investigation with missing evidence."},
+    {q:"What does containment look like for a compromised cloud identity?",a:"Revoke active sessions and refresh tokens, disable the account or rotate the credential, remove elevated role assignments, and review what it did while compromised. Simply changing the password isn't enough — existing tokens stay valid until revoked."},
+    {q:"Why should the post-incident review be blameless?",a:"If people expect punishment they hide information, and you lose the detail needed to fix the system. Incidents almost always trace to process and design gaps rather than one person's mistake. Blameless reviews get you the truth and therefore the fix."}
+  ],
+  iq:[
+    {q:"An EC2 instance or VM is confirmed compromised. Walk me through your response.",lvl:"scenario",pts:["Confirm the finding is real before disrupting production","Preserve evidence: snapshot the disk and capture memory if possible, before changing anything","Contain: isolate with a restrictive security group rather than terminating, so you keep the evidence","Revoke the instance's identity credentials and rotate anything it had access to","Scope it: what did that identity touch, what else did that IP reach, is it lateral yet","Eradicate and rebuild from a known-good image — don't clean and return to service","Recover, then monitor for return","Post-incident review: how did it get in, why didn't we detect it sooner, what changes"]},
+    {q:"How do you decide incident severity?",lvl:"deep",pts:["Data sensitivity and volume involved","Systems affected and whether they're business-critical","Whether it's active and spreading or contained","Regulatory or contractual notification triggers","Reputational and customer impact","Use a predefined severity matrix so it's consistent, not a judgment call at 3am","Err upward initially — it's easier to downgrade than to explain a late escalation"]}
+  ]
+},
+{
+  id:"comms", n:14, title:"Vendor Engagement & Communication", pri:4,
+  blurb:"Explaining findings, pushing vendors, and getting other teams to actually act.",
+  lede:"Security engineers can't fix most of what they find — someone else owns the system. That makes influence the core skill. This is also the section that separates a Security Engineer II from a Security Engineer I: you're expected to hold the vendor call and the developer conversation without a manager in the room.",
+  onjob:"We run vendor syncs with the CNAPP and scanner providers, escalate broken detections, explain findings to developers who didn't ask for them, and translate technical risk into something leadership can decide on.",
+  points:[
+    "Adapt to the audience. Developers want the exploit path and the fix. Leadership wants risk, cost, and a decision. Auditors want evidence.",
+    "Lead with impact, not with the tool's policy name. 'Anyone on the internet can read these customer records' beats 'Policy CKV_AZURE_59 failed'.",
+    "Bring the fix. A finding with a suggested remediation gets acted on; a finding alone gets deprioritized.",
+    "Assume competence and good intent. Developers aren't careless — they're measured on delivery and nobody handed them the secure pattern.",
+    "With vendors: come prepared with specifics — screenshots, IDs, timestamps, reproduction steps. Track issues in writing, hold them to dates, and know your support tier and escalation path.",
+    "Ask questions when you don't know something. Pretending is how you lose credibility permanently; asking is how you learn the environment.",
+    "Written communication is most of the job: findings, tickets, status updates, runbooks. Clear beats clever.",
+    "Escalate with a recommendation, not just a problem."
+  ],
+  terms:[
+    {t:"Stakeholder",d:"Anyone affected by or able to influence the work."},
+    {t:"Escalation path",d:"The defined route for raising an unresolved issue to the next level."},
+    {t:"SLA",d:"A committed response or resolution time from a vendor or internal team."},
+    {t:"Risk acceptance",d:"A documented decision by an accountable owner to live with a known risk."},
+    {t:"QBR",d:"Quarterly Business Review — recurring vendor performance and roadmap meeting."},
+    {t:"POC",d:"Proof of Concept — a scoped trial to validate a tool before purchase."}
+  ],
+  study:[
+    {q:"How do you explain a finding to a developer so they act on it?",a:"Show what an attacker could actually do with it, in their system's terms. Point to the exact line, resource, or config. Provide the fixed version. Give a realistic timeline and offer to help. Skip the policy ID and the lecture."},
+    {q:"How does a report to leadership differ from one to engineers?",a:"Leadership needs the business impact, the options with cost and effort, a recommendation, and a decision to make. No tool names, no CVE numbers, no packet detail. Engineers need the technical specifics and the fix."},
+    {q:"What do you bring to a vendor escalation call?",a:"Concrete evidence — case numbers, timestamps, screenshots, reproduction steps — plus a clear statement of business impact, what you've already tried, and what you're asking them to commit to by when. Then follow up in writing."},
+    {q:"You're asked about a technology you don't know in an interview. What do you say?",a:"Say you haven't worked with it, then reason out loud from principles you do know and draw the analogy to something similar. Interviewers are testing how you handle gaps — honest reasoning scores far higher than a confident wrong answer."}
+  ],
+  iq:[
+    {q:"A team pushes back hard on a critical finding. How do you handle it?",lvl:"scenario",pts:["Listen first — they may have context that changes the assessment","Verify your own finding before defending it","Separate the two possible disagreements: is it not real, or is it not a priority","If it's real, demonstrate the impact concretely rather than asserting severity","Offer options: full fix, compensating control, or phased approach","Understand their constraints and work within them where you can","If it stays unresolved, escalate to the accountable owner with a clear recommendation and let them formally accept the risk","Keep the relationship — you'll need them next quarter"]},
+    {q:"How would you present the security posture of our cloud environment to executives?",lvl:"scenario",pts:["Open with the answer: are we better or worse than last quarter, and what needs a decision","Use trend lines and risk reduction, not raw finding counts","Frame in business terms: exposure of customer data, regulatory risk, operational risk","Include coverage honestly — what we can't see is as important as what we found","Bring two or three specific asks with cost and benefit","Keep it short with detail in an appendix","Never surprise them — significant issues get raised before the deck"]}
+  ]
+},
+{
+  id:"certs", n:15, title:"Education & Certifications", pri:3,
+  blurb:"What actually helps, and how to talk about not having it yet.",
+  lede:"Certifications open doors and prove baseline knowledge; they don't prove you can do the job. For someone moving into this field, one cloud certification plus demonstrable hands-on work is a stronger combination than three certifications and no lab.",
+  onjob:"Nobody asks about certificates day-to-day. They matter at hiring and for some client or compliance requirements. What matters afterward is whether you can reason about an unfamiliar system.",
+  points:[
+    "Typical background: a bachelor's in IT, computer science, cybersecurity, or engineering — but equivalent experience is widely accepted.",
+    "CompTIA Security+ is the standard entry credential covering broad security fundamentals.",
+    "Azure: AZ-900 (fundamentals) then SC-900 or AZ-500 (Azure Security Engineer) — the most relevant path for this team.",
+    "AWS: Cloud Practitioner then Security Specialty. GCP: Associate Cloud Engineer then Professional Cloud Security Engineer.",
+    "Kubernetes: CKA, or CKS if you want to go deep on cluster security.",
+    "Later-career: CISSP for breadth and management tracks, OSCP for offensive depth.",
+    "Vendor training from Wiz, Palo Alto, and Splunk is often free and directly relevant to the tools in use.",
+    "A home lab you can talk about beats an extra certification. Build something, break it, scan it, fix it — then tell that story."
+  ],
+  terms:[
+    {t:"Security+",d:"CompTIA's foundational, vendor-neutral security certification."},
+    {t:"AZ-500",d:"Microsoft Azure Security Engineer Associate certification."},
+    {t:"SC-900",d:"Microsoft Security, Compliance, and Identity Fundamentals."},
+    {t:"CKS",d:"Certified Kubernetes Security Specialist."},
+    {t:"CISSP",d:"Broad management-oriented certification requiring five years of experience."},
+    {t:"Home lab",d:"A personal environment for hands-on practice — the most convincing evidence of skill."}
+  ],
+  study:[
+    {q:"Which certification makes most sense first for this role?",a:"Security+ if you need broad security fundamentals, or AZ-900 followed by AZ-500 if you're targeting an Azure-focused cloud security team specifically. AZ-500 maps most directly to the work described in this guide."},
+    {q:"How do you answer 'you don't have certification X'?",a:"Acknowledge it directly, say what you've done instead — hands-on work, a lab, a project — and state your concrete plan and timeline for getting it. Never be defensive; a credible plan reads better than an excuse."},
+    {q:"What's a good home lab project for this role?",a:"Deploy a small app in Azure with Terraform, deliberately misconfigure something, scan it with Checkov and a free CNAPP tier, fix the findings in the IaC, and wire the scan into a GitHub Actions pipeline. That single project touches cloud, IaC, scanning, and CI/CD."}
+  ],
+  iq:[
+    {q:"How do you keep up with security as a field?",lvl:"core",pts:["Name specific real sources: vendor blogs, CISA advisories, a newsletter you actually read","Mention hands-on practice, not just reading","Follow the tools you'd use here — Wiz, Prisma, Splunk release notes","Have an opinion on something recent to prove you actually do this","Show a sustainable habit rather than a heroic claim"]}
+  ]
+},
+{
+  id:"traits", n:16, title:"Traits & Behavioral Answers", pri:4,
+  blurb:"What the team is really screening for, and how to evidence it.",
+  lede:"Technical answers get you shortlisted; these get you hired. Every trait below should be backed by a specific story, not an adjective. Use STAR: Situation, Task, Action, Result — and spend most of your time on Action and Result.",
+  onjob:"Small security teams work across every other department. Someone who's technically strong but hard to work with creates more friction than they remove.",
+  points:[
+    "Passion for security — evidenced by what you do unprompted: labs, reading, side projects.",
+    "Teamwork — you work with developers, platform engineers, vendors, and auditors, mostly without authority over any of them.",
+    "Willingness to learn — the tooling changes constantly; the ability to pick things up fast beats current knowledge.",
+    "Critical thinking — investigate, find root cause, weigh risk, propose something practical.",
+    "Communication — explain the same issue to an engineer and an executive, correctly, in each of their languages.",
+    "Ownership — take the thing through to actually fixed, including the unglamorous follow-up.",
+    "Adaptability — priorities change when a zero-day drops.",
+    "Curiosity — ask why the finding exists, not just how to close the ticket.",
+    "Prepare 5-6 STAR stories that can be reshaped to fit most behavioral questions."
+  ],
+  terms:[
+    {t:"STAR",d:"Situation, Task, Action, Result — the structure for behavioral answers."},
+    {t:"Root cause",d:"The underlying reason a problem occurred, not just its symptom."},
+    {t:"Ownership",d:"Following an issue through to resolution without being chased."},
+    {t:"Influence without authority",d:"Getting action from people who don't report to you."}
+  ],
+  study:[
+    {q:"What does STAR stand for and where should the emphasis go?",a:"Situation, Task, Action, Result. Keep situation and task brief — two sentences of context. Spend the bulk on the actions you personally took and the measurable result. Interviewers are listening for 'I', not 'we'."},
+    {q:"How many prepared stories do you actually need?",a:"Five or six versatile ones: a hard technical problem, a conflict or pushback, a failure and what you learned, a time you led or owned something, a time you learned something fast, and a time you explained something technical to a non-technical audience. Most behavioral questions are variations of these."},
+    {q:"You have no professional security experience yet. What's the answer?",a:"Use what you have — school projects, home labs, IT work, other jobs. Transferable stories about ownership, communication, and problem-solving are legitimate. Then bridge explicitly: here's what I did, here's how it applies to this role."}
+  ],
+  iq:[
+    {q:"Tell me about a time you had to explain something technical to someone non-technical.",lvl:"behavioral",pts:["Situation: who they were and why the explanation mattered","Task: what decision or action depended on them understanding","Action: how you adapted — analogy, removed jargon, checked comprehension","Result: what they decided or did as a result","Ideal close: a moment where they asked a good follow-up question, showing it landed"]},
+    {q:"Tell me about a time you disagreed with someone. How did it go?",lvl:"behavioral",pts:["Pick a real disagreement with a professional resolution — not a story where you were simply right","Show you sought to understand their position first","Explain how you made your case: evidence, not volume","Show flexibility — either you changed your view or you found a middle path","Result should include the relationship surviving intact","Avoid blaming the other person anywhere in the story"]},
+    {q:"Tell me about a time you failed or made a mistake.",lvl:"behavioral",pts:["Choose a real mistake with real consequence — a trivial one reads as evasion","Own it plainly without over-apologizing or blaming circumstances","Focus on what you did once you realized: how fast you raised it, how you fixed it","State the specific lesson and the change you made afterward","Ideally show the change held — you didn't repeat it"]},
+    {q:"Why do you want to work in cloud security?",lvl:"behavioral",pts:["Give a genuine, specific origin — a moment or a project, not 'I've always been passionate about security'","Connect to what the work actually involves: breadth, problem-solving, constant change","Reference something concrete you've done to pursue it","Tie it to this team and these tools specifically","Keep it under 90 seconds"]},
+    {q:"Where do you see gaps in your own knowledge for this role?",lvl:"behavioral",pts:["Answer honestly — everyone has gaps and evasion is obvious","Pick a real one that isn't core to the job's first six months","Show self-awareness about why it's a gap","State what you're actively doing about it, with specifics","Close on a strength that offsets it, without deflecting the question"]}
+  ]
+}
+];
+
+/* extra behavioral questions for mock interviews */
+const BEHAVIORAL_EXTRA = [
+  {q:"Walk me through your background and why you're interested in this role.",lvl:"behavioral",pts:["Two minutes maximum, structured: where you started, what you've done, why here","Emphasize the parts of your history that map to cloud, automation, or risk","End on why this specific team, not why any security job","Practice it out loud — this is the one answer that should be nearly memorized"]},
+  {q:"Tell me about a time you had to learn something quickly.",lvl:"behavioral",pts:["Situation with a real deadline or stake","How you approached learning it — documentation, labs, asking people","Show judgment about what you needed to know vs what could wait","Result: what you delivered and how quickly","Connect to this role, where tooling changes constantly"]},
+  {q:"How do you prioritize when everything is urgent?",lvl:"behavioral",pts:["Have an actual framework: impact, exposure, effort, deadline","Show you communicate trade-offs rather than silently dropping things","Mention confirming priority with a stakeholder rather than guessing","Give a concrete example where you chose and it worked out"]},
+  {q:"Do you have any questions for us?",lvl:"behavioral",pts:["Always have three or four ready — no questions reads as no interest","Good ones: what the first 90 days look like, how the team measures success, what the hardest problem right now is","Ask about the tooling landscape and where the gaps are","Ask what makes someone successful on this team specifically","Avoid asking anything answered on the job posting"]}
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const MEM = {};
+const store = {
+  read(){
+    try{ const r = localStorage.getItem("secprep.v1"); if(r) return JSON.parse(r); }catch(e){}
+    return MEM.data || null;
+  },
+  write(o){
+    MEM.data = o;
+    try{ localStorage.setItem("secprep.v1", JSON.stringify(o)); }catch(e){}
+  },
+  clear(){ MEM.data = null; try{ localStorage.removeItem("secprep.v1"); }catch(e){} }
+};
+const blank = () => ({read:{}, study:{}, iq:{}, cards:{}, plan:{}, theme:"light"});
+let S = Object.assign(blank(), store.read() || {});
+const save = () => store.write(S);
+
+const T = id => TOPICS.find(t=>t.id===id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* readiness maths */
+function topicScore(t){
+  const sq = t.study.length, iqn = t.iq.length;
+  const sDone = t.study.filter((_,i)=>S.study[t.id+":"+i]!=null).length;
+  const sGood = t.study.filter((_,i)=>(S.study[t.id+":"+i]||0)>=2).length;
+  const iDone = t.iq.filter((_,i)=>S.iq[t.id+":"+i]!=null).length;
+  const iGood = t.iq.filter((_,i)=>(S.iq[t.id+":"+i]||0)>=2).length;
+  const readPart = S.read[t.id] ? 25 : 0;
+  const studyPart = sq ? 40*(sGood/sq) : 40;
+  const iqPart = iqn ? 35*(iGood/iqn) : 35;
+  return {
+    pct: Math.round(readPart+studyPart+iqPart),
+    sDone, sq, iDone, iqn, sGood, iGood,
+    touched: !!S.read[t.id] || sDone>0 || iDone>0
+  };
+}
+function readiness(){
+  let wsum=0, w=0;
+  TOPICS.forEach(t=>{ const wt = t.pri; wsum += topicScore(t).pct*wt; w += wt; });
+  return Math.round(wsum/w);
+}
+const BANDS = [
+  {min:0,  label:"Not started",     v:"--crit"},
+  {min:1,  label:"Critical gaps",   v:"--crit"},
+  {min:25, label:"Major gaps",      v:"--high"},
+  {min:45, label:"Coming together", v:"--med"},
+  {min:65, label:"Solid coverage",  v:"--low"},
+  {min:85, label:"Interview-ready", v:"--brand"}
+];
+const band = p => BANDS.filter(b=>p>=b.min).pop();
+
+/* ============================================================
+   POSTURE HEADER (signature element)
+   ============================================================ */
+function renderPosture(){
+  const p = readiness(), b = band(p), C = 2*Math.PI*23;
+  const done = TOPICS.filter(t=>topicScore(t).pct>=80).length;
+  const q = Object.keys(S.study).length + Object.keys(S.iq).length;
+  const weak = TOPICS.filter(t=>t.pri===5 && topicScore(t).pct<60).length;
+  document.getElementById("posture").innerHTML = `
+    <div class="ring" style="--score:var(${b.v})">
+      <svg width="52" height="52"><circle class="track" cx="26" cy="26" r="23"></circle>
+      <circle class="fill" cx="26" cy="26" r="23" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p/100)}"></circle></svg>
+      <b>${p}</b>
+    </div>
+    <div class="posture-meta" style="--score:var(${b.v})">
+      <div class="lbl">Readiness posture</div>
+      <div class="val">${b.label}</div>
+    </div>
+    <div class="posture-stats">
+      <div class="pstat"><div class="n">${done}<span style="color:var(--muted)">/${TOPICS.length}</span></div><div class="t">Topics solid</div></div>
+      <div class="pstat"><div class="n">${q}</div><div class="t">Questions rated</div></div>
+      <div class="pstat"><div class="n" style="color:${weak?"var(--crit)":"var(--low)"}">${weak}</div><div class="t">Top-priority gaps</div></div>
+    </div>`;
+}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+const V = {};
+
+V.overview = () => {
+  const p = readiness();
+  const next = TOPICS.filter(t=>topicScore(t).pct<80).sort((a,b)=>b.pri-a.pri||a.n-b.n)[0];
+  const cards = TOPICS.map(t=>{
+    const s = topicScore(t);
+    return `<button class="card topic-card" data-goto="${t.id}">
+      <div class="tc-top">
+        <div><div class="tc-num">${String(t.n).padStart(2,"0")}</div><div class="tc-title">${esc(t.title)}</div></div>
+        <span class="pri pri-${t.pri}">${t.pri===5?"MUST KNOW":t.pri===4?"IMPORTANT":"USEFUL"}</span>
+      </div>
+      <div class="tc-blurb">${esc(t.blurb)}</div>
+      <div class="meter"><i style="width:${s.pct}%"></i></div>
+      <div class="tc-foot"><span>${s.pct}% covered</span><span>${s.sq+s.iqn} questions</span></div>
+    </button>`;
+  }).join("");
+  return `
+  <div class="eyebrow">Security Engineer II · Cloud &amp; DevSecOps</div>
+  <h1 class="h-page">Everything the team touches,<br>in the order it matters.</h1>
+  <p class="sub">Sixteen topics from the prep guide, expanded into study notes, recall questions and interview
+  rehearsal. Nothing here needs to be finished in one sitting — the posture score at the top tracks where you
+  stand across all of it, weighted by how heavily each topic gets asked about.</p>
+  <div class="btnrow" style="margin-top:20px">
+    ${next?`<button class="btn" data-drill="${next.id}">${p===0?"Start with":"Pick up at"} ${esc(next.title)} →</button>`:`<button class="btn" data-view-go="interview">Run a mock interview →</button>`}
+    <button class="btn ghost" data-view-go="plan">See the 4-week plan</button>
+  </div>
+  <div class="divider"></div>
+  <div class="mini-h" style="margin-top:0">All topics</div>
+  <div class="grid grid-3">${cards}</div>`;
+};
+
+V.library = () => `
+  <div class="eyebrow">Reference</div>
+  <h1 class="h-page">Topic library</h1>
+  <p class="sub">The full guide, expanded. Open a topic, read it, then mark it read — that counts toward your posture score.
+  Everything here is also what the study and interview questions are drawn from.</p>
+  <div style="margin-top:22px">${TOPICS.map(t=>{
+    const s = topicScore(t);
+    return `<details class="acc" id="acc-${t.id}">
+      <summary class="acc-head">
+        <span class="idx">${String(t.n).padStart(2,"0")}</span>
+        <span class="nm">${esc(t.title)}</span>
+        <span class="pri pri-${t.pri}">${"★".repeat(t.pri)}</span>
+        <span class="chev">›</span>
+      </summary>
+      <div class="acc-body">
+        <p class="lede">${esc(t.lede)}</p>
+        <div class="onjob"><b>What this looks like on the team</b>${esc(t.onjob)}</div>
+        <div class="mini-h">Key points</div>
+        <ul class="pts">${t.points.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <div class="mini-h">Terms to know</div>
+        <div class="termgrid">${t.terms.map(x=>`<div class="term"><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div>`).join("")}</div>
+        <div class="btnrow" style="margin-top:20px">
+          <button class="btn sm ${S.read[t.id]?"ghost":""}" data-read="${t.id}">${S.read[t.id]?"✓ Marked as read":"Mark as read"}</button>
+          <button class="btn sm ghost" data-drill="${t.id}">Study this topic (${s.sq} questions)</button>
+          <button class="btn sm ghost" data-practice="${t.id}">Practice interview questions (${s.iqn})</button>
+        </div>
+      </div>
+    </details>`;
+  }).join("")}</div>`;
+
+/* ---------- guided study drill ---------- */
+let drill = null;
+V.drill = () => {
+  if(!drill) return `
+    <div class="eyebrow">Guided study</div>
+    <h1 class="h-page">Learn a topic, then prove it</h1>
+    <p class="sub">Each session shows you the concept at a high level, then asks recall questions one at a time.
+    Answer in your head or out loud, reveal, and rate yourself honestly — the rating is what drives your posture score
+    and what decides which topics resurface later.</p>
+    <div class="grid grid-3" style="margin-top:22px">${TOPICS.map(t=>{
+      const s = topicScore(t);
+      return `<button class="card topic-card" data-drill="${t.id}">
+        <div class="tc-top"><div><div class="tc-num">${String(t.n).padStart(2,"0")}</div><div class="tc-title">${esc(t.title)}</div></div>
+        <span class="pri pri-${t.pri}">${"★".repeat(t.pri)}</span></div>
+        <div class="meter"><i style="width:${s.sq?Math.round(100*s.sGood/s.sq):0}%"></i></div>
+        <div class="tc-foot"><span>${s.sGood}/${s.sq} solid</span><span>${S.read[t.id]?"read ✓":"not read"}</span></div>
+      </button>`;
+    }).join("")}</div>`;
+
+  const t = T(drill.id);
+  if(drill.stage==="intro") return `
+    <div class="eyebrow">Guided study · ${String(t.n).padStart(2,"0")}</div>
+    <h1 class="h-page">${esc(t.title)}</h1>
+    <div class="stage" style="margin-top:20px">
+      <p class="lede" style="margin-top:0;font-size:16px">${esc(t.lede)}</p>
+      <div class="onjob"><b>What this looks like on the team</b>${esc(t.onjob)}</div>
+      <div class="mini-h">The points that matter</div>
+      <ul class="pts">${t.points.map(x=>`<li>${x}</li>`).join("")}</ul>
+      <div class="btnrow" style="margin-top:24px">
+        <button class="btn" data-drill-start="1">Start ${t.study.length} recall questions →</button>
+        <button class="btn ghost" data-drill-exit="1">Back to topics</button>
+      </div>
+    </div>`;
+
+  if(drill.stage==="done"){
+    const s = topicScore(t);
+    const nx = TOPICS.filter(x=>topicScore(x).pct<80 && x.id!==t.id).sort((a,b)=>b.pri-a.pri)[0];
+    return `
+    <div class="eyebrow">Guided study</div>
+    <h1 class="h-page">${esc(t.title)} — session complete</h1>
+    <div class="stage" style="margin-top:20px">
+      <div class="mini-h" style="margin-top:0">Result</div>
+      <p style="font-size:17px;margin:0">You rated <b>${drill.good}</b> of ${t.study.length} solid.
+      ${drill.good===t.study.length?"That topic is holding up well.":"The ones you flagged will be the first thing worth revisiting."}</p>
+      <div class="meter" style="margin-top:18px"><i style="width:${s.pct}%"></i></div>
+      <div class="tc-foot" style="margin-top:7px"><span>Topic coverage ${s.pct}%</span><span>${t.iq.length} interview questions still available</span></div>
+      <div class="btnrow" style="margin-top:24px">
+        <button class="btn" data-practice="${t.id}">Practice the interview questions →</button>
+        ${nx?`<button class="btn ghost" data-drill="${nx.id}">Next topic: ${esc(nx.title)}</button>`:""}
+        <button class="btn ghost" data-drill-exit="1">Back to topics</button>
+      </div>
+    </div>`;
+  }
+
+  const i = drill.i, item = t.study[i];
+  return `
+  <div class="eyebrow">Guided study · ${esc(t.title)}</div>
+  <div class="progline"><i style="width:${Math.round(100*i/t.study.length)}%"></i></div>
+  <div class="stage">
+    <div class="stage-top">
+      <span class="qcount">Recall ${i+1} of ${t.study.length}</span>
+      <button class="btn ghost sm" data-drill-exit="1">End session</button>
+    </div>
+    <p class="qtext">${esc(item.q)}</p>
+    ${!drill.shown ? `<div class="btnrow" style="margin-top:26px"><button class="btn" data-drill-show="1">Show answer</button></div>`
+    : `<div class="answer">
+        <div class="mini-h">Answer</div>
+        <p style="margin:0;font-size:15.5px;color:var(--ink-2)">${esc(item.a)}</p>
+        <div class="mini-h" style="margin-top:20px">How did that go?</div>
+        <div class="selfrate">
+          <button class="rate" data-rate="0">Didn't know it</button>
+          <button class="rate" data-rate="1">Roughly there</button>
+          <button class="rate" data-rate="2">Solid</button>
+        </div>
+      </div>`}
+  </div>`;
+};
+
+/* ---------- interview practice ---------- */
+let sess = null;
+let pick = { topics:new Set(), count:8, behavioral:true };
+V.interview = () => {
+  if(!sess){
+    return `
+    <div class="eyebrow">Rehearse</div>
+    <h1 class="h-page">Interview practice</h1>
+    <p class="sub">Answer out loud, in full sentences, before you reveal anything — reading the answer points first
+    feels productive and teaches you nothing. Each question shows what a strong answer covers, not a script to memorize.</p>
+    <div class="card" style="padding:20px;margin-top:22px">
+      <div class="mini-h" style="margin-top:0">Topics <span style="text-transform:none;letter-spacing:0;color:var(--muted)">— leave all off for a full mix</span></div>
+      <div class="chiprow">${TOPICS.map(t=>`<button class="chip" data-pick="${t.id}" aria-pressed="${pick.topics.has(t.id)}">${esc(t.title)}</button>`).join("")}</div>
+      <div class="mini-h">Session length</div>
+      <div class="chiprow">${[5,8,12,20].map(n=>`<button class="chip" data-count="${n}" aria-pressed="${pick.count===n}">${n} questions</button>`).join("")}
+        <button class="chip" data-count="0" aria-pressed="${pick.count===0}">Everything</button></div>
+      <div class="mini-h">Behavioral questions</div>
+      <div class="chiprow"><button class="chip" data-beh="1" aria-pressed="${pick.behavioral}">${pick.behavioral?"Included":"Excluded"}</button></div>
+      <div class="btnrow" style="margin-top:22px">
+        <button class="btn" data-sess="custom">Start session →</button>
+        <button class="btn ghost" data-sess="mock">Full mock interview (10 mixed)</button>
+      </div>
+      <p class="note">Mock interview weights toward the five-star topics and always ends with behavioral questions, the way a real screen usually runs.</p>
+    </div>`;
+  }
+  if(sess.stage==="done"){
+    const solid = sess.rated.filter(r=>r===2).length, shaky = sess.rated.filter(r=>r===0).length;
+    const weak = sess.weak.slice(0,4);
+    return `
+    <div class="eyebrow">Rehearse</div>
+    <h1 class="h-page">Session complete</h1>
+    <div class="stage" style="margin-top:20px">
+      <div class="grid grid-3">
+        <div><div class="pstat"><div class="n" style="font-size:26px;color:var(--low)">${solid}</div><div class="t">Solid</div></div></div>
+        <div><div class="pstat"><div class="n" style="font-size:26px;color:var(--med)">${sess.rated.filter(r=>r===1).length}</div><div class="t">Roughly there</div></div></div>
+        <div><div class="pstat"><div class="n" style="font-size:26px;color:var(--crit)">${shaky}</div><div class="t">Shaky</div></div></div>
+      </div>
+      ${weak.length?`<div class="mini-h">Worth another pass</div>
+      <ul class="pts">${weak.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:`<p class="lede">Nothing flagged as shaky. Try a longer session or a topic you've been avoiding.</p>`}
+      <div class="btnrow" style="margin-top:24px">
+        <button class="btn" data-sess-exit="1">Set up another session</button>
+        <button class="btn ghost" data-view-go="overview">Back to overview</button>
+      </div>
+    </div>`;
+  }
+  const q = sess.qs[sess.i];
+  const lvlName = {core:"Core",deep:"Deep dive",scenario:"Scenario",behavioral:"Behavioral"}[q.lvl]||"Core";
+  return `
+  <div class="eyebrow">Interview practice${sess.mock?" · mock interview":""}</div>
+  <div class="progline"><i style="width:${Math.round(100*sess.i/sess.qs.length)}%"></i></div>
+  <div class="stage">
+    <div class="stage-top">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="qcount">Question ${sess.i+1} of ${sess.qs.length}</span>
+        <span class="tag ${q.lvl}">${lvlName}</span>
+        ${q.topic?`<span class="tag">${esc(q.topic)}</span>`:""}
+      </div>
+      <button class="btn ghost sm" data-sess-exit="1">End session</button>
+    </div>
+    <p class="qtext">${esc(q.q)}</p>
+    ${!sess.shown?`<div class="btnrow" style="margin-top:26px">
+        <button class="btn" data-sess-show="1">Reveal what a strong answer covers</button>
+      </div><p class="note">Say your answer out loud first. Aim for 60–90 seconds.</p>`
+    :`<div class="answer">
+        <div class="mini-h">A strong answer touches on</div>
+        <ul class="pts">${q.pts.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+        <div class="mini-h" style="margin-top:20px">How did that go?</div>
+        <div class="selfrate">
+          <button class="rate" data-srate="0">Shaky</button>
+          <button class="rate" data-srate="1">Got the gist</button>
+          <button class="rate" data-srate="2">Solid</button>
+        </div>
+      </div>`}
+  </div>`;
+};
+
+/* ---------- flashcards ---------- */
+let deck = null;
+V.cards = () => {
+  if(!deck){
+    const total = TOPICS.reduce((a,t)=>a+t.terms.length,0);
+    const known = Object.values(S.cards).filter(Boolean).length;
+    return `
+    <div class="eyebrow">Rehearse</div>
+    <h1 class="h-page">Flashcards</h1>
+    <p class="sub">${total} terms pulled from every topic. The fastest way to stop the vocabulary being the thing that
+    slows you down — you can't reason about CIEM in an interview while also trying to remember what it stands for.</p>
+    <div class="card" style="padding:20px;margin-top:22px">
+      <div class="mini-h" style="margin-top:0">Deck</div>
+      <div class="chiprow">
+        <button class="chip" data-deck="all" aria-pressed="true">All ${total} terms</button>
+        <button class="chip" data-deck="unknown">Only the ${total-known} not yet marked known</button>
+        <button class="chip" data-deck="p5">Five-star topics only</button>
+      </div>
+      <p class="note">Progress: ${known} of ${total} marked known.</p>
+    </div>`;
+  }
+  if(deck.i>=deck.list.length) return `
+    <div class="eyebrow">Flashcards</div>
+    <h1 class="h-page">Deck finished</h1>
+    <div class="stage" style="margin-top:20px">
+      <p class="lede" style="margin-top:0">You marked <b>${deck.known}</b> of ${deck.list.length} as known this pass.</p>
+      <div class="btnrow" style="margin-top:22px">
+        <button class="btn" data-deck-exit="1">Choose another deck</button>
+        <button class="btn ghost" data-view-go="acronyms">See all terms as a list</button>
+      </div>
+    </div>`;
+  const c = deck.list[deck.i];
+  return `
+  <div class="eyebrow">Flashcards · ${esc(c.topic)}</div>
+  <div class="progline"><i style="width:${Math.round(100*deck.i/deck.list.length)}%"></i></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <span class="qcount">Card ${deck.i+1} of ${deck.list.length}</span>
+    <button class="btn ghost sm" data-deck-exit="1">End deck</button>
+  </div>
+  <div class="flip ${deck.flipped?"on":""}" id="flip">
+    <div class="flip-in">
+      <div class="face"><span class="lbl">Term</span><span class="t">${esc(c.t)}</span><span class="lbl" style="margin-top:12px">tap to flip</span></div>
+      <div class="face back"><span class="lbl">${esc(c.t)}</span><span class="d">${esc(c.d)}</span></div>
+    </div>
+  </div>
+  <div class="btnrow" style="justify-content:center;margin-top:22px">
+    <button class="btn ghost" data-card="0">Review again</button>
+    <button class="btn" data-card="1">I know this</button>
+  </div>`;
+};
+
+/* ---------- acronym decoder ---------- */
+let filter = "";
+V.acronyms = () => {
+  const rows = [];
+  TOPICS.forEach(t=>t.terms.forEach(x=>rows.push({...x,topic:t.title,id:t.id})));
+  const f = filter.toLowerCase();
+  const shown = rows.filter(r=>!f || r.t.toLowerCase().includes(f) || r.d.toLowerCase().includes(f) || r.topic.toLowerCase().includes(f));
+  return `
+  <div class="eyebrow">Reference</div>
+  <h1 class="h-page">Acronym decoder</h1>
+  <p class="sub">Every term from every topic in one searchable list. This field runs on acronyms and most of them
+  sound alike — this is the page to keep open during a call.</p>
+  <div style="margin:20px 0 14px"><input class="search" id="q" placeholder="Search terms, definitions or topics…" value="${esc(filter)}"></div>
+  <div class="card" style="overflow:hidden">
+    <table class="tbl"><thead><tr><th style="width:22%">Term</th><th>Meaning</th><th style="width:22%">Topic</th></tr></thead>
+    <tbody>${shown.length?shown.map(r=>`<tr><td><code>${esc(r.t)}</code></td><td>${esc(r.d)}</td><td style="color:var(--muted)">${esc(r.topic)}</td></tr>`).join(""):
+      `<tr><td colspan="3" class="empty">No term matches that. Try a shorter search.</td></tr>`}</tbody></table>
+  </div>
+  <p class="note">${shown.length} of ${rows.length} terms shown.</p>`;
+};
+
+/* ---------- 4 week plan ---------- */
+const PLAN = [
+  {w:"Week 1", h:"Ground floor", why:"Nothing else makes sense without the cloud and identity layer underneath it.",
+   tasks:["Read Cloud Fundamentals and Identity & Access Management end to end","Run the guided study for both topics until every recall question is solid","Create a free Azure account and deploy one VM plus one storage account by hand","Find and fix a public-access setting on that storage account","Flashcards: cloud and IAM terms only","Practice the IAM interview questions out loud"]},
+  {w:"Week 2", h:"Code and pipelines", why:"IaC and CI/CD are where this team's daily work actually happens.",
+   tasks:["Read Infrastructure as Code, CI/CD Security and DevSecOps Tooling","Write a small Terraform file that deploys the same storage account","Run Checkov against it, read every finding, fix them in the code","Push it to GitHub and add a scanning step in GitHub Actions","Commit a fake secret deliberately and watch secret scanning catch it","Practice the DevSecOps interview questions — you must be able to define SAST, DAST and SCA without hesitating"]},
+  {w:"Week 3", h:"Detection and defect", why:"Findings and logs are the raw material of the role — this is triage week.",
+   tasks:["Read CNAPP, Vulnerability Management, SIEM and Containers & Kubernetes","Sign up for a free Wiz or Prisma Cloud trial and connect the test subscription","Look up one real CVE and trace how you'd assess it in your environment","Build and scan a container image; switch the base image and compare the results","Try Splunk free and write one search that groups failed logins by user","Practice the CNAPP and vulnerability management scenario questions"]},
+  {w:"Week 4", h:"Rehearsal", why:"Knowing it and being able to say it under pressure are different skills.",
+   tasks:["Read the remaining topics: best practices, incident response, communication, project management","Write out five STAR stories in full, then cut each to 90 seconds","Run a full mock interview in this app and rate yourself honestly","Redo every question you rated shaky","Prepare four questions to ask the interviewer","Do one last flashcard pass over all terms","Write a one-paragraph answer to 'why cloud security' and say it out loud until it sounds like you"]}
+];
+V.plan = () => {
+  const total = PLAN.reduce((a,w)=>a+w.tasks.length,0);
+  const done = Object.values(S.plan).filter(Boolean).length;
+  return `
+  <div class="eyebrow">Prepare</div>
+  <h1 class="h-page">Four weeks, start to interview</h1>
+  <p class="sub">Built around the priority order in the guide: the five-star topics come first and get the most time,
+  and every week pairs reading with something hands-on. If there's less than four weeks, do week 1 and week 4 properly
+  and compress the middle.</p>
+  <div class="progline" style="margin:20px 0 6px"><i style="width:${Math.round(100*done/total)}%"></i></div>
+  <p class="note" style="margin:0 0 20px">${done} of ${total} tasks done</p>
+  <div class="grid grid-2">${PLAN.map((w,wi)=>`
+    <div class="card week">
+      <div class="wlbl">${w.w}</div>
+      <h4>${esc(w.h)}</h4>
+      <p class="note" style="margin:0 0 10px">${esc(w.why)}</p>
+      ${w.tasks.map((t,ti)=>{
+        const k = wi+":"+ti, on = !!S.plan[k];
+        return `<label class="task ${on?"done":""}"><input type="checkbox" data-plan="${k}" ${on?"checked":""}><span>${esc(t)}</span></label>`;
+      }).join("")}
+    </div>`).join("")}</div>`;
+};
+
+/* ============================================================
+   ROUTER + EVENTS
+   ============================================================ */
+let view = "overview";
+function render(){
+  document.querySelectorAll(".navbtn").forEach(b=>b.setAttribute("aria-current", b.dataset.view===view));
+  document.getElementById("view").innerHTML = V[view]();
+  renderPosture();
+  const q = document.getElementById("q");
+  if(q){ q.addEventListener("input", e=>{ filter=e.target.value; const p=e.target.selectionStart;
+    render(); const n=document.getElementById("q"); n.focus(); n.setSelectionRange(p,p); }); }
+  const fl = document.getElementById("flip");
+  if(fl) fl.addEventListener("click", ()=>{ deck.flipped=!deck.flipped; render(); });
+}
+function go(v){
+  // a finished session shouldn't greet you again when you come back to the tab
+  if(v!=="drill" && drill && drill.stage==="done") drill=null;
+  if(v!=="interview" && sess && sess.stage==="done") sess=null;
+  if(v!=="cards" && deck && deck.i>=deck.list.length) deck=null;
+  view=v; window.scrollTo({top:0,behavior:"instant"}); render();
+}
+
+function startDrill(id){ drill={id, stage:"intro", i:0, shown:false, good:0}; go("drill"); }
+function startPractice(ids, count, beh, mock){
+  let pool=[];
+  const list = ids && ids.length ? ids : TOPICS.map(t=>t.id);
+  list.forEach(id=>{ const t=T(id); t.iq.forEach((q,i)=>pool.push({...q, topic:t.title, key:id+":"+i})); });
+  if(mock){
+    const five = pool.filter(q=>TOPICS.find(t=>t.title===q.topic).pri===5 && q.lvl!=="behavioral");
+    const rest = pool.filter(q=>!five.includes(q) && q.lvl!=="behavioral");
+    pool = shuffle(five).slice(0,5).concat(shuffle(rest).slice(0,2));
+    pool = pool.concat(shuffle(BEHAVIORAL_EXTRA.concat(T("traits").iq.map((q,i)=>({...q,topic:"Behavioral",key:"traits:"+i})))).slice(0,3));
+  } else {
+    if(!beh) pool = pool.filter(q=>q.lvl!=="behavioral");
+    pool = shuffle(pool);
+    if(count>0) pool = pool.slice(0,count);
+  }
+  sess={qs:pool, i:0, shown:false, rated:[], weak:[], mock:!!mock, stage:"run"};
+  go("interview");
+}
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function buildDeck(kind){
+  let rows=[];
+  TOPICS.forEach(t=>{ if(kind==="p5"&&t.pri!==5) return; t.terms.forEach((x,i)=>rows.push({...x,topic:t.title,key:t.id+":"+i})); });
+  if(kind==="unknown") rows = rows.filter(r=>!S.cards[r.key]);
+  deck={list:shuffle(rows), i:0, flipped:false, known:0};
+  if(!deck.list.length) deck.list=[{t:"Nothing left",d:"Every card in this deck is already marked known. Pick another deck.",topic:"—",key:"x"}];
+  go("cards");
+}
+
+document.addEventListener("click", e=>{
+  const el = e.target.closest("[data-view],[data-view-go],[data-goto],[data-read],[data-drill],[data-drill-start],[data-drill-show],[data-drill-exit],[data-rate],[data-pick],[data-count],[data-beh],[data-sess],[data-sess-show],[data-sess-exit],[data-srate],[data-practice],[data-deck],[data-deck-exit],[data-card]");
+  if(!el) return;
+  const d = el.dataset;
+
+  if(d.view){ go(d.view); return; }
+  if(d.viewGo){ go(d.viewGo); return; }
+  if(d.goto){ go("library"); setTimeout(()=>{ const a=document.getElementById("acc-"+d.goto); if(a){a.open=true; a.scrollIntoView({behavior:"smooth",block:"start"});} },60); return; }
+  if(d.read){ S.read[d.read]=!S.read[d.read]; save(); render(); return; }
+
+  if(d.drill){ startDrill(d.drill); return; }
+  if(d.drillStart){ drill.stage="run"; drill.i=0; drill.shown=false; drill.good=0; S.read[drill.id]=true; save(); render(); return; }
+  if(d.drillShow){ drill.shown=true; render(); return; }
+  if(d.drillExit){ drill=null; render(); return; }
+  if(d.rate!=null && drill){
+    const v=+d.rate, t=T(drill.id);
+    S.study[drill.id+":"+drill.i]=v; if(v===2) drill.good++;
+    save();
+    drill.i++; drill.shown=false;
+    if(drill.i>=t.study.length) drill.stage="done";
+    render(); return;
+  }
+
+  if(d.pick){ pick.topics.has(d.pick)?pick.topics.delete(d.pick):pick.topics.add(d.pick); render(); return; }
+  if(d.count!=null){ pick.count=+d.count; render(); return; }
+  if(d.beh){ pick.behavioral=!pick.behavioral; render(); return; }
+  if(d.sess){ d.sess==="mock"?startPractice(null,0,true,true):startPractice([...pick.topics], pick.count, pick.behavioral, false); return; }
+  if(d.practice){ startPractice([d.practice],0,true,false); return; }
+  if(d.sessShow){ sess.shown=true; render(); return; }
+  if(d.sessExit){ sess=null; render(); return; }
+  if(d.srate!=null && sess){
+    const v=+d.srate, q=sess.qs[sess.i];
+    sess.rated.push(v); if(v<2) sess.weak.push(q.q);
+    if(q.key) S.iq[q.key]=v;
+    save();
+    sess.i++; sess.shown=false;
+    if(sess.i>=sess.qs.length) sess.stage="done";
+    render(); return;
+  }
+
+  if(d.deck){ buildDeck(d.deck); return; }
+  if(d.deckExit){ deck=null; render(); return; }
+  if(d.card!=null){
+    const c=deck.list[deck.i];
+    if(d.card==="1"){ S.cards[c.key]=true; deck.known++; save(); }
+    deck.i++; deck.flipped=false; render(); return;
+  }
+});
+
+document.addEventListener("change", e=>{
+  if(e.target.dataset.plan!=null){ S.plan[e.target.dataset.plan]=e.target.checked; save(); render(); }
+});
+
+document.addEventListener("keydown", e=>{
+  if(e.target.tagName==="INPUT") return;
+  if(view==="drill" && drill && drill.stage==="run"){
+    if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!drill.shown){drill.shown=true;render();} }
+    if(drill.shown && ["1","2","3"].includes(e.key)) document.querySelector(`[data-rate="${+e.key-1}"]`)?.click();
+  }
+  if(view==="interview" && sess && sess.stage==="run"){
+    if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!sess.shown){sess.shown=true;render();} }
+    if(sess.shown && ["1","2","3"].includes(e.key)) document.querySelector(`[data-srate="${+e.key-1}"]`)?.click();
+  }
+  if(view==="cards" && deck && deck.i<deck.list.length && (e.key===" "||e.key==="Enter")){ e.preventDefault(); deck.flipped=!deck.flipped; render(); }
+});
+
+/* theme + progress controls */
+function applyTheme(){ document.documentElement.setAttribute("data-theme", S.theme||"light"); }
+document.getElementById("themeBtn").addEventListener("click", ()=>{ S.theme = S.theme==="dark"?"light":"dark"; save(); applyTheme(); });
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(!confirm("Clear all progress? Ratings, read marks, flashcards and plan checkboxes will be reset.")) return;
+  const th=S.theme; store.clear(); S=Object.assign(blank(),{theme:th}); save(); drill=null; sess=null; deck=null; go("overview");
+});
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "secprep-progress.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+
+applyTheme();
+render();
+</script>
+</body>
+</html>
