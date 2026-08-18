@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber Security Engineer 2 · Product Security Tools · Readiness Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --surface-2:#F6F8FA;
+  --ink:#0F1520; --ink-2:#3A4655; --muted:#6E7A8A;
+  --line:#D9DFE6; --line-soft:#E8ECF1;
+  --brand:#0E7C86; --brand-deep:#095A62; --brand-wash:#E2F1F2;
+  --crit:#C2213F; --high:#D2632A; --med:#B8901A; --low:#2C8A61; --info:#3B6FD0;
+  --shadow:0 1px 2px rgba(15,21,32,.05), 0 8px 24px -12px rgba(15,21,32,.18);
+  --radius:10px;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+html[data-theme="dark"]{
+  --bg:#0C1117; --surface:#141B24; --surface-2:#1A222D;
+  --ink:#E7EDF4; --ink-2:#B4C0CE; --muted:#7E8C9D;
+  --line:#26313D; --line-soft:#1E2833;
+  --brand:#3BC2CD; --brand-deep:#8EE3EA; --brand-wash:#123135;
+  --crit:#F2607C; --high:#EF9455; --med:#E0BA4A; --low:#4FC391; --info:#7AA5F0;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--body);
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+h1,h2,h3,h4{font-family:var(--display);font-weight:600;letter-spacing:-.015em;margin:0}
+a{color:var(--brand)}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.rail{
+  background:var(--surface); border-right:1px solid var(--line);
+  padding:20px 14px; display:flex; flex-direction:column; gap:6px;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brandmark{display:flex;align-items:center;gap:9px;padding:0 8px 16px;margin-bottom:6px;border-bottom:1px solid var(--line-soft)}
+.brandmark .glyph{
+  width:26px;height:26px;border-radius:7px;background:var(--brand);
+  display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:13px;font-weight:600;flex:none;
+}
+html[data-theme="dark"] .brandmark .glyph{color:#08161a}
+.brandmark b{font-family:var(--display);font-size:14.5px;font-weight:600;letter-spacing:-.01em;display:block;line-height:1.2}
+.brandmark span{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.navlabel{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:14px 10px 5px}
+.navbtn{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:8px 10px;border-radius:8px;color:var(--ink-2);font-size:14px;font-weight:500;
+  transition:background .13s,color .13s;
+}
+.navbtn:hover{background:var(--surface-2);color:var(--ink)}
+.navbtn[aria-current="true"]{background:var(--brand-wash);color:var(--brand-deep);font-weight:600}
+html[data-theme="dark"] .navbtn[aria-current="true"]{color:var(--brand-deep)}
+.navbtn .k{font-family:var(--mono);font-size:11px;color:var(--muted);width:13px;flex:none;text-align:center}
+.navbtn[aria-current="true"] .k{color:var(--brand)}
+.railfoot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:4px}
+.minibtn{
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);
+  padding:6px 10px;border-radius:6px;text-align:left;width:100%;
+}
+.minibtn:hover{background:var(--surface-2);color:var(--ink)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.view{padding:26px 34px 80px;max-width:1080px;width:100%;animation:rise .34s cubic-bezier(.2,.7,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- posture bar (signature) ---------- */
+.posture{
+  position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:1px solid var(--line);padding:12px 34px;
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.ring{width:52px;height:52px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:6;stroke-linecap:round}
+.ring .track{stroke:var(--line-soft)}
+.ring .fill{stroke:var(--score);transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.3,1),stroke .4s}
+.ring b{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ink);
+}
+.posture-meta{min-width:150px}
+.posture-meta .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.posture-meta .val{font-family:var(--display);font-size:17px;font-weight:600;color:var(--score);line-height:1.25}
+.posture-stats{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap}
+.pstat .n{font-family:var(--mono);font-size:16px;font-weight:600}
+.pstat .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- typography blocks ---------- */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:8px}
+.h-page{font-size:29px;line-height:1.15;letter-spacing:-.025em}
+.sub{color:var(--muted);max-width:62ch;margin:9px 0 0;font-size:14.5px}
+.divider{height:1px;background:var(--line);margin:26px 0}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+
+.topic-card{padding:15px 16px;text-align:left;display:flex;flex-direction:column;gap:9px;transition:transform .14s,box-shadow .14s,border-color .14s;width:100%}
+.topic-card:hover{transform:translateY(-2px);border-color:var(--brand);box-shadow:0 10px 26px -14px rgba(14,124,134,.5)}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.tc-num{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+.tc-title{font-family:var(--display);font-size:15.5px;font-weight:600;letter-spacing:-.01em;line-height:1.28}
+.tc-blurb{font-size:13px;color:var(--muted);line-height:1.5}
+.meter{height:4px;border-radius:99px;background:var(--line-soft);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--brand);border-radius:99px;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.tc-foot{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.05em}
+
+/* priority pills use severity scale */
+.pri{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.08em;padding:3px 7px;border-radius:5px;white-space:nowrap;flex:none}
+.pri-5{background:color-mix(in srgb,var(--crit) 13%,transparent);color:var(--crit)}
+.pri-4{background:color-mix(in srgb,var(--high) 14%,transparent);color:var(--high)}
+.pri-3{background:color-mix(in srgb,var(--info) 13%,transparent);color:var(--info)}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;
+  font-size:14px;font-weight:600;font-family:var(--body);
+  background:var(--brand);color:#fff;transition:filter .14s,transform .1s;
+}
+html[data-theme="dark"] .btn{color:#06171a}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--brand);color:var(--brand);filter:none}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+
+/* ---------- library ---------- */
+.acc{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;margin-bottom:9px}
+.acc-head{display:flex;align-items:center;gap:12px;width:100%;padding:13px 15px;text-align:left;cursor:pointer;list-style:none}
+.acc-head::-webkit-details-marker{display:none}
+.acc-head::marker{content:""}
+.acc-head:hover{background:var(--surface-2)}
+.acc-head .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:20px;flex:none}
+.acc-head .nm{font-family:var(--display);font-size:15px;font-weight:600;flex:1;letter-spacing:-.01em}
+.acc-head .chev{color:var(--muted);transition:transform .2s;font-size:12px;font-family:var(--mono)}
+.acc[open] .chev{transform:rotate(90deg)}
+.acc-body{padding:2px 15px 18px 47px;border-top:1px solid var(--line-soft)}
+.lede{font-size:14.5px;color:var(--ink-2);margin:14px 0 0}
+.onjob{
+  margin:14px 0 0;padding:11px 13px;background:var(--brand-wash);
+  border-left:2px solid var(--brand);border-radius:0 7px 7px 0;font-size:13.5px;color:var(--ink-2);
+}
+.onjob b{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--brand-deep);display:block;margin-bottom:4px}
+.mini-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+ul.pts{margin:0;padding-left:17px}
+ul.pts li{margin-bottom:6px;font-size:14px;color:var(--ink-2)}
+.termgrid{display:grid;gap:7px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.term{padding:9px 11px;background:var(--surface-2);border-radius:7px;font-size:13.2px;border:1px solid var(--line-soft)}
+.term b{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink);display:block}
+.term span{color:var(--muted)}
+
+/* ---------- drill / practice ---------- */
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 28px}
+.stage-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.qcount{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.qtext{font-family:var(--display);font-size:22px;line-height:1.32;letter-spacing:-.02em;margin:6px 0 0}
+.answer{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);animation:rise .28s ease}
+.answer .mini-h{margin-top:0}
+.selfrate{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}
+.rate{padding:9px 15px;border-radius:8px;border:1px solid var(--line);font-size:13.5px;font-weight:600;font-family:var(--body);transition:.14s}
+.rate[data-v="0"]:hover{border-color:var(--crit);color:var(--crit);background:color-mix(in srgb,var(--crit) 8%,transparent)}
+.rate[data-v="1"]:hover{border-color:var(--med);color:var(--med);background:color-mix(in srgb,var(--med) 10%,transparent)}
+.rate[data-v="2"]:hover{border-color:var(--low);color:var(--low);background:color-mix(in srgb,var(--low) 9%,transparent)}
+.progline{height:3px;background:var(--line-soft);border-radius:99px;margin-bottom:20px;overflow:hidden}
+.progline i{display:block;height:100%;background:var(--brand);transition:width .4s}
+.chiprow{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
+.chip{
+  font-size:12.5px;font-weight:500;padding:6px 11px;border-radius:99px;
+  border:1px solid var(--line);color:var(--ink-2);transition:.13s;font-family:var(--body);
+}
+.chip:hover{border-color:var(--brand)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+html[data-theme="dark"] .chip[aria-pressed="true"]{color:#06171a}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft)}
+.tag.scenario{color:var(--high);border-color:color-mix(in srgb,var(--high) 30%,transparent)}
+.tag.deep{color:var(--info);border-color:color-mix(in srgb,var(--info) 30%,transparent)}
+.tag.behavioral{color:var(--low);border-color:color-mix(in srgb,var(--low) 30%,transparent)}
+
+/* ---------- flashcard ---------- */
+.flip{perspective:1400px;height:250px;margin:0 auto;max-width:560px;cursor:pointer}
+.flip-in{position:relative;width:100%;height:100%;transition:transform .55s cubic-bezier(.3,.8,.3,1);transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.face{
+  position:absolute;inset:0;backface-visibility:hidden;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px;text-align:center;gap:10px;
+}
+.face.back{transform:rotateY(180deg);background:var(--surface-2)}
+.face .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.face .t{font-family:var(--display);font-size:25px;font-weight:600;letter-spacing:-.02em}
+.face .d{font-size:15px;color:var(--ink-2);max-width:44ch;line-height:1.55}
+
+/* ---------- tables / plan ---------- */
+.tbl{width:100%;border-collapse:collapse;font-size:13.8px}
+.tbl th{
+  text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;padding:9px 12px;border-bottom:1px solid var(--line);
+}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl code{font-family:var(--mono);font-size:12.4px;color:var(--brand-deep);font-weight:500}
+.search{
+  width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-family:var(--body);font-size:14px;
+}
+.search:focus{outline:2px solid var(--brand);outline-offset:1px}
+.week{padding:16px 18px}
+.week h4{font-size:16px;margin-bottom:2px}
+.week .wlbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:9px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line-soft);font-size:13.8px;color:var(--ink-2);cursor:pointer}
+.task input{margin-top:4px;accent-color:var(--brand);flex:none;width:15px;height:15px;cursor:pointer}
+.task.done span{text-decoration:line-through;color:var(--muted)}
+.empty{padding:34px;text-align:center;color:var(--muted);font-size:14px}
+.note{font-size:12.6px;color:var(--muted);margin-top:10px}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;overflow-x:auto;gap:4px;padding:10px;border-right:none;border-bottom:1px solid var(--line);align-items:center}
+  .brandmark{border:none;padding:0 10px 0 4px;margin:0;flex:none}
+  .brandmark .txt{display:none}
+  .navlabel{display:none}
+  .navbtn{width:auto;white-space:nowrap;padding:7px 11px}
+  .navbtn .k{display:none}
+  .railfoot{margin:0 0 0 auto;flex-direction:row;border:none;padding:0}
+  .minibtn{width:auto}
+  .view{padding:20px 16px 70px}
+  .posture{padding:11px 16px;gap:12px}
+  .stage{padding:19px 17px}
+  .qtext{font-size:19px}
+  .acc-body{padding-left:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="rail">
+    <div class="brandmark">
+      <div class="glyph">S2</div>
+      <div class="txt"><b>Readiness Console</b><span>Humana · CSE2</span></div>
+    </div>
+    <div class="navlabel">Prepare</div>
+    <button class="navbtn" data-view="overview"><span class="k">01</span>Overview</button>
+    <button class="navbtn" data-view="library"><span class="k">02</span>Topic library</button>
+    <button class="navbtn" data-view="drill"><span class="k">03</span>Guided study</button>
+    <div class="navlabel">Rehearse</div>
+    <button class="navbtn" data-view="interview"><span class="k">04</span>Interview practice</button>
+    <button class="navbtn" data-view="cards"><span class="k">05</span>Flashcards</button>
+    <div class="navlabel">Reference</div>
+    <button class="navbtn" data-view="tools"><span class="k">06</span>Tool directory</button>
+    <button class="navbtn" data-view="acronyms"><span class="k">07</span>Acronym decoder</button>
+    <button class="navbtn" data-view="plan"><span class="k">08</span>3-week plan</button>
+    <div class="railfoot">
+      <button class="minibtn" id="themeBtn">◐ Theme</button>
+      <button class="minibtn" id="exportBtn">↓ Save progress</button>
+      <button class="minibtn" id="resetBtn">⟲ Reset progress</button>
+    </div>
+  </nav>
+  <div class="main">
+    <header class="posture" id="posture"></header>
+    <div id="view" class="view"></div>
+  </div>
+</div>
+<script>
+/* ============================================================
+   CONTENT — tuned to the Humana Cyber Security Engineer 2 posting
+   (Product Security Tools team)
+   ============================================================ */
+
+const ROLE = {
+  title:"Cyber Security Engineer 2 · Product Security Tools",
+  org:"Humana · Remote",
+  thesis:"This is a tool operations role, not a tool architecture role. The team owns the security platforms — onboarding them, integrating them, tuning them, fixing them when they break, and reporting on what they find. Most interview questions will be some version of \u201Chow would you make this tool work well for the people who depend on it.\u201D",
+  signals:[
+    {k:"Named platforms",v:"AppOmni, Cycode, Checkmarx, Wiz, Prisma Cloud, JFrog/Xray, AppScan, Burp Suite, NowSecure, GCP Model Armor. Know what each one is and what category it belongs to."},
+    {k:"Named integrations",v:"Splunk, ServiceNow, Azure DevOps, GitHub, M365. Integration is listed as a duty, not a nice-to-have."},
+    {k:"AI security",v:"Model Armor, AI application discovery, AI posture management. Mentioned twice. Almost nobody preparing for this role will have studied it."},
+    {k:"Three clouds",v:"Azure, GCP, and AWS all named. GCP matters more here than a typical Azure-shop posting."},
+    {k:"Regulated environment",v:"Humana is healthcare. Audit, compliance, change management, and access reviews are called out explicitly."},
+    {k:"Operational output",v:"Reports, dashboards, metrics, executive summaries, SOPs, playbooks, KT docs, escalation paths, QBRs. Roughly half the listed duties are communication artifacts."}
+  ]
+};
+
+const TOPICS = [
+{
+  id:"toolops", n:1, title:"Security Tool Operations", pri:5,
+  blurb:"Onboarding, tuning, and keeping the platforms healthy. This is the job.",
+  lede:"Read the posting's verb list: onboard, configure, tune, operationalize, troubleshoot, maintain. The team doesn't primarily hunt threats — it makes the tools that hunt threats actually work. A tool that's deployed but noisy, half-covered, or quietly broken provides no security value, and closing that gap is the whole role.",
+  onjob:"You own a platform end to end: getting it connected to the environment, tuning it until the findings are trustworthy, fixing the scan that started failing on Tuesday, and being able to say what percentage of the estate it actually covers.",
+  points:[
+    "Onboarding is a project: scope, connect, authenticate, validate coverage, baseline the findings, then tune before anyone else sees results.",
+    "\u201COperationalized\u201D means someone acts on the output. Deployed and operationalized are completely different states, and interviewers listen for whether you know that.",
+    "Tuning is continuous. Every rule change, every new repo, every cloud account shifts the noise floor.",
+    "Tool health is its own monitoring problem: are scans completing, are connectors authenticated, is coverage drifting, are results stale.",
+    "Troubleshooting patterns: expired credentials or tokens, permission changes on the service account, API rate limits, network/proxy blocks, agent version drift, timeouts on large repos.",
+    "Coverage is the metric that matters most and is reported least. \u201C400 findings\u201D means nothing without \u201Cacross 60% of repos.\u201D",
+    "Every tool needs an owner, a runbook, an escalation path, and a vendor contact — before it breaks, not during."
+  ],
+  terms:[
+    {t:"Onboarding",d:"Connecting a tool to systems and validating it sees what it should."},
+    {t:"Operationalize",d:"Getting output into a workflow where someone acts on it."},
+    {t:"Tuning",d:"Adjusting rules and thresholds so findings are trustworthy and actionable."},
+    {t:"Coverage",d:"Percentage of the estate a tool actually sees — the most under-reported metric."},
+    {t:"Tool health",d:"Whether scans, connectors, and integrations are functioning right now."},
+    {t:"Baseline",d:"The initial finding set, separated from new findings so new code is held clean."},
+    {t:"Runbook / SOP",d:"Documented procedure for a recurring operational task."},
+    {t:"Escalation path",d:"Defined route for an issue that can't be resolved at the current level."}
+  ],
+  study:[
+    {q:"What's the difference between a tool being deployed and being operationalized?",a:"Deployed means it's installed and producing output. Operationalized means the output reaches the right person in the workflow they already use, they trust it enough to act, and there's a defined process for what happens next. Most failed tool rollouts are deployed but never operationalized."},
+    {q:"You onboard a new scanner and it returns 3,000 findings on day one. What do you do before telling anyone?",a:"Baseline them. Separate the pre-existing debt from anything new so teams are held to a clean standard going forward without being handed 3,000 tickets. Then sample the findings to estimate the false positive rate and tune before the first real report."},
+    {q:"Name five reasons a scan that worked yesterday fails today.",a:"Expired credential or rotated token, changed permissions on the service account, API rate limiting, a network or proxy change blocking the connector, agent or extension version drift, repo grew past a size or timeout limit, or an upstream vendor outage."},
+    {q:"Why is coverage more important than finding count?",a:"Finding count without coverage is unmeasurable. Zero findings could mean a clean environment or a scanner pointed at nothing. Coverage tells you how much of the estate the number actually describes, and coverage gaps are invisible risk."}
+  ],
+  iq:[
+    {q:"Walk me through how you'd onboard a new security tool into an enterprise environment.",lvl:"scenario",pts:["Define scope and success criteria first — what must it see, and what does good look like","Identify the integration points and get the access provisioned with least privilege","Start with a pilot scope rather than the whole estate","Validate coverage: does it actually see everything in scope, and how do you prove that","Baseline existing findings separately from new ones","Tune before wider release — the first impression determines whether teams ever trust it","Route output into the workflow people already use (ticketing, PR comments, Splunk)","Document the SOP, owner, escalation path, and vendor contact","Define the recurring health check and the metrics you'll report"]},
+    {q:"A team reports their scans have been failing for a week. How do you troubleshoot it?",lvl:"scenario",pts:["Establish scope first — one team, one repo, or everyone? That splits the problem immediately","Find what changed: credential rotation, permission change, agent update, repo growth, network change","Check the tool's own health and status page before assuming it's local","Read the actual error rather than guessing from the symptom","Reproduce it in a controlled way if you can","Communicate early — tell them you have it, even before you have the answer","Fix, verify with a successful scan, then ask why nobody noticed for a week","Add monitoring so the next failure surfaces in hours, not a week"]},
+    {q:"How do you know whether a security tool is actually delivering value?",lvl:"deep",pts:["Coverage against the intended scope, not raw finding volume","Are findings being acted on — remediation rate and time to remediate","False positive rate and the trend over time","Tool uptime and scan success rate","Whether teams come to it voluntarily or have to be chased","Cost per unit of risk reduced, if you can get there","A tool nobody acts on is shelfware regardless of how good its detection is"]}
+  ]
+},
+{
+  id:"platforms", n:2, title:"The Named Platforms", pri:5,
+  blurb:"Ten tools are named in the posting. Know what each one is and its category.",
+  lede:"The posting names AppOmni, Cycode, Checkmarx, Wiz, Prisma Cloud, JFrog/Xray, AppScan, Burp Suite, NowSecure, and GCP Model Armor. You will not be expected to have used all of them. You will be expected to know what each one does and which category it belongs to — hesitating on that reads as not having read the posting.",
+  onjob:"These are the platforms the team owns. Most of the work is spread across them: an AppOmni expansion this month, a Cycode remediation push next month, a Wiz policy review ongoing.",
+  points:[
+    "The reflex to build: hear the tool name → say the category → say what it protects. \u201CCycode is secrets detection and pipeline security — it catches credentials before they reach the repo.\u201D",
+    "Grouping them: <b>SaaS posture</b> — AppOmni. <b>Secrets &amp; pipeline</b> — Cycode. <b>SAST</b> — Checkmarx. <b>CNAPP/cloud</b> — Wiz, Prisma Cloud. <b>Artifacts &amp; dependencies</b> — JFrog Xray. <b>DAST</b> — AppScan, Burp Suite. <b>Mobile</b> — NowSecure. <b>AI runtime</b> — GCP Model Armor.",
+    "Overlap is normal and worth naming: Wiz and Prisma Cloud both do CNAPP; Cycode and Checkmarx both touch code. Knowing where they overlap shows you understand the portfolio, not just the labels.",
+    "Use the Tool directory tab in this app for the full card on each one — that's the page to review the morning of the interview.",
+    "If asked about a tool you haven't used, name the category, name one you have used in that category, and describe what you'd expect to be true of it.",
+    "Never bluff hands-on experience with a named platform. The interviewer likely owns it and will ask a follow-up you can't answer."
+  ],
+  terms:[
+    {t:"AppOmni",d:"SSPM — SaaS security posture management."},
+    {t:"Cycode",d:"ASPM platform strongest on secrets detection and pipeline security."},
+    {t:"Checkmarx",d:"SAST — static analysis of source code."},
+    {t:"Wiz",d:"Agentless CNAPP with attack path analysis."},
+    {t:"Prisma Cloud",d:"Palo Alto CNAPP, agentless plus agent-based runtime protection."},
+    {t:"JFrog Xray",d:"Artifact and dependency scanning inside the JFrog registry."},
+    {t:"HCL AppScan",d:"DAST — dynamic testing of running applications."},
+    {t:"Burp Suite",d:"Manual and automated web application security testing."},
+    {t:"NowSecure",d:"Mobile application security testing."},
+    {t:"GCP Model Armor",d:"Runtime screening of prompts and responses for AI applications."}
+  ],
+  study:[
+    {q:"Sort the named tools into categories.",a:"SSPM: AppOmni. Secrets and pipeline: Cycode. SAST: Checkmarx. CNAPP: Wiz and Prisma Cloud. Artifact/dependency: JFrog Xray. DAST: AppScan and Burp Suite. Mobile: NowSecure. AI runtime protection: GCP Model Armor."},
+    {q:"Where do Wiz and Prisma Cloud overlap, and where do they differ?",a:"Both are CNAPP covering posture, entitlements, vulnerabilities, and IaC. Wiz is agentless-first with very fast deployment and strong attack path graphing. Prisma Cloud adds agent-based Defenders for deeper runtime protection and container controls. Running both usually means one is the graph and reporting layer while the other does runtime enforcement."},
+    {q:"You've never used AppScan. How do you answer a question about it?",a:"Name the category — it's DAST, dynamic testing against a running application. Say what you've used instead, such as OWASP ZAP or Burp. Describe what you'd expect: an authenticated scan configuration, a crawl and attack phase, and results needing validation against the running app. Then be plain that you haven't operated it."},
+    {q:"Why does the posting name both Cycode and Checkmarx?",a:"They cover different code risks. Checkmarx is SAST — analyzing source for vulnerable patterns. Cycode is broader ASPM with its strength in secrets detection and pipeline integrity. A repo can be clean in Checkmarx and still have a leaked AWS key that Cycode catches."}
+  ],
+  iq:[
+    {q:"Which of our tools have you worked with, and how would you get up to speed on the rest?",lvl:"core",pts:["Be honest and specific about what you've actually touched","Name the categories you do understand, since that transfers","Have a concrete ramp plan: vendor documentation, free training, sandbox or trial tenant","Mention that most of these have free tiers or academies you can start on before day one","Show you understand the category even where you lack the product","Close by noting tool operation skills transfer — onboarding, tuning, integration patterns are the same shape everywhere"]},
+    {q:"We run both Wiz and Prisma Cloud. How would you think about that overlap?",lvl:"deep",pts:["Don't assume it's redundant — ask what each was bought for","Common split: one as the inventory and risk graph, the other for runtime enforcement and container controls","Overlap creates a real operational problem: duplicate findings and conflicting severities confuse owners","Address it by defining a system of record per finding type and deduplicating before findings reach teams","Compare coverage rather than features — where does each actually see, and is there a gap between them","Frame any consolidation as a data-driven exercise, not a preference"]}
+  ]
+},
+{
+  id:"integrations", n:3, title:"Integrations — Splunk, ServiceNow, ADO, GitHub, M365", pri:5,
+  blurb:"Getting findings out of the tool and into where work actually happens.",
+  lede:"The posting lists integration as a core duty and names the systems. This is the highest-leverage part of tool operations: a finding sitting in a security console changes nothing, and the same finding as a ticket assigned to the owning team gets fixed. Integration is where security tooling either becomes part of the business or stays a silo.",
+  onjob:"Wiring Wiz findings into ServiceNow tickets, pushing Cycode results into Splunk for correlation and reporting, adding Checkmarx to Azure DevOps pipelines, and putting AppOmni alerts in front of the right M365 admins.",
+  points:[
+    "The pattern is always the same: authenticate, map fields, define the trigger, decide direction, handle failure, avoid duplicates.",
+    "<b>Splunk</b> — the aggregation and reporting layer. Send findings and tool health events, correlate across tools, build the dashboards leadership sees. Watch ingest volume and cost.",
+    "<b>ServiceNow</b> — the work layer. Findings become tickets with an owner, an SLA, and an audit trail. Critical decisions: what severity creates a ticket, who it routes to, and does closure sync back.",
+    "<b>Azure DevOps / GitHub</b> — the developer layer. Scans in pipelines, results in pull requests, gates on merge. Meet developers where they already are.",
+    "<b>M365</b> — the collaboration and SaaS layer. Both a posture target for AppOmni and the notification channel via Teams and email.",
+    "Bidirectional sync is where integrations break. If closing the ticket doesn't close the finding, or a reopened finding creates a second ticket, teams stop trusting it fast.",
+    "Deduplication and idempotency are the hard parts: the same finding rescanned daily must not create 30 tickets.",
+    "Integrations need monitoring too. A silently failing connector looks exactly like a clean environment."
+  ],
+  terms:[
+    {t:"Webhook",d:"An HTTP callback the source fires when an event occurs — push, not poll."},
+    {t:"Bidirectional sync",d:"Status changes flow both ways between systems."},
+    {t:"Field mapping",d:"Translating one system's fields and severity scale into another's."},
+    {t:"Idempotency",d:"Rerunning an integration doesn't duplicate what it already created."},
+    {t:"Deduplication",d:"Recognizing a repeat finding as the same issue rather than a new one."},
+    {t:"Service account",d:"The non-human identity an integration authenticates as."},
+    {t:"Rate limit",d:"Cap on API calls, signalled by HTTP 429."},
+    {t:"HEC",d:"Splunk HTTP Event Collector — the standard endpoint for pushing events into Splunk."}
+  ],
+  study:[
+    {q:"Why integrate findings into ServiceNow instead of letting teams use the security console?",a:"Because teams already live in ServiceNow. A ticket has an owner, an SLA, a queue they already work, and an audit trail compliance can point at. Asking developers to check a separate security portal is asking them to change habits, and they won't."},
+    {q:"What breaks most often in a findings-to-ticketing integration?",a:"Duplicates and stale state. The same finding rescanned creates repeat tickets, or the finding is fixed but the ticket stays open because closure doesn't sync back. Both destroy trust quickly. You need a stable finding identifier and bidirectional status sync."},
+    {q:"What would you send from a security tool into Splunk?",a:"Findings for correlation and trend reporting, plus tool health events — scan started, completed, failed, coverage counts. The health events are what let you alert on a scanner that's quietly stopped working."},
+    {q:"How would you connect a scanner to Azure DevOps?",a:"Add it as a pipeline task or service connection using a scoped service account, run it on pull request builds, publish results back to the PR so the developer sees them in context, and gate the merge only on the agreed severity set. Store credentials in a variable group backed by a key vault."}
+  ],
+  iq:[
+    {q:"Design an integration that turns cloud security findings into assigned work.",lvl:"scenario",pts:["Source: pull from the tool's API or receive its webhook","Filter first — not every finding deserves a ticket, or you'll bury the queue","Enrich with owner: resource tags, CMDB lookup, or repo ownership mapping","Deduplicate on a stable finding identifier so rescans don't multiply tickets","Create in ServiceNow with severity, SLA, evidence, and remediation guidance","Sync bidirectionally so closing one closes the other, and verify the fix with a rescan","Handle failures: retry, dead-letter queue, and alert if the integration itself stops","Monitor the integration and report on ticket volume, age, and closure rate"]},
+    {q:"How would you build reporting across multiple security tools with different severity scales?",lvl:"deep",pts:["Normalize first — define a common severity model and map each tool's scale to it","Pick a single aggregation layer, likely Splunk here","Agree a common asset identifier so findings across tools can be joined","Deduplicate where two tools find the same issue","Layer environment context — exposure and data sensitivity — on top of raw severity","Build separate views: analyst detail vs leadership trend","Be transparent about coverage gaps in the report itself, not just the findings"]},
+    {q:"An integration has been silently failing for two weeks. What went wrong and how do you prevent it?",lvl:"scenario",pts:["Root cause is usually a rotated credential, permission change, or an upstream API change","The real failure is the lack of monitoring, not the break itself","Fix: heartbeat monitoring — alert on absence of expected events, not just on errors","Alert on volume anomalies too, since zero findings looks identical to a clean environment","Document the credential rotation schedule and its downstream dependencies","Add the connector to the tool health dashboard and the recurring health check"]}
+  ]
+},
+{
+  id:"aisec", n:4, title:"AI Security & Model Armor", pri:5,
+  blurb:"Prompt injection, AI discovery, and posture for AI applications. The section nobody prepares.",
+  lede:"The posting mentions AI security twice: GCP Model Armor as a named platform, and \u201CAI security controls, Model Armor, AI application discovery, or AI posture management\u201D in the experience list. This is the newest part of the role and the one where a candidate can most easily stand out, because most applicants will have nothing to say here.",
+  onjob:"Discovering which teams have quietly stood up AI applications, getting guardrails in front of them, and extending posture management to cover models, prompts, and the data flowing through them.",
+  points:[
+    "<b>Model Armor</b> is a GCP service that screens prompts and model responses at runtime — checking for prompt injection, jailbreak attempts, sensitive data leakage, malicious URLs, and harmful content. Think of it as a WAF for the model boundary.",
+    "<b>Prompt injection</b> is the defining AI vulnerability: untrusted input is interpreted as instruction. Direct injection comes from the user; indirect injection hides in content the model retrieves, like a document or a web page.",
+    "<b>AI application discovery</b> is shadow AI — finding the LLM integrations teams built without telling security. This is the same problem as shadow IT and is exactly what SSPM and CASB-style discovery is for.",
+    "<b>AI posture management</b> extends the CSPM idea to AI: which models are in use, what data they can reach, who can call them, are guardrails enabled, is anything logged.",
+    "The OWASP Top 10 for LLM Applications is the reference to name: prompt injection, sensitive information disclosure, supply chain, data and model poisoning, improper output handling, excessive agency.",
+    "<b>Excessive agency</b> is the risk that scales fastest — an AI agent given tools and permissions can act, and its permissions are its blast radius. This is an IAM problem wearing a new hat.",
+    "Guardrails belong on both sides: screen the input going in and the output coming back. Never trust model output as safe to render or execute."
+  ],
+  terms:[
+    {t:"Model Armor",d:"GCP service screening AI prompts and responses at runtime."},
+    {t:"Prompt injection",d:"Untrusted input that the model treats as instruction rather than data."},
+    {t:"Indirect injection",d:"Injected instructions hidden in retrieved content the model reads."},
+    {t:"Jailbreak",d:"Input crafted to bypass a model's safety instructions."},
+    {t:"Shadow AI",d:"AI applications and integrations built without security's knowledge."},
+    {t:"AI-SPM",d:"AI Security Posture Management — inventory and configuration risk for AI systems."},
+    {t:"Excessive agency",d:"An AI system granted more capability or permission than its task requires."},
+    {t:"Guardrail",d:"A control screening model input or output for policy violations."},
+    {t:"RAG",d:"Retrieval-Augmented Generation — the model reads external documents, which is a common indirect injection path."}
+  ],
+  study:[
+    {q:"What does Model Armor do?",a:"It screens prompts going into a model and responses coming back, at runtime. It checks for prompt injection and jailbreak attempts, sensitive data in either direction, malicious URLs, and harmful content, and it can block or flag based on policy. It's a guardrail at the model boundary, conceptually like a WAF."},
+    {q:"Explain prompt injection and why it's hard to fix.",a:"The model receives instructions and data in the same channel — plain text — so anything that looks like an instruction can be treated as one. Unlike SQL injection there's no parameterization to separate them, because natural language has no strict grammar to enforce. So mitigation is layered: input and output screening, least privilege on what the model can do, and never trusting output as safe."},
+    {q:"What's indirect prompt injection?",a:"The malicious instruction isn't typed by the user — it's embedded in content the model retrieves, such as a web page, PDF, or support ticket. The user asks an innocent question, the model reads the poisoned document, and follows the attacker's instructions. It's the main risk in RAG systems."},
+    {q:"What is AI application discovery and why does it matter here?",a:"Finding AI applications and integrations teams have deployed without security review — shadow AI. It matters because you can't apply guardrails, posture checks, or data controls to systems you don't know exist, and LLM integrations are trivially easy for a developer to stand up with an API key."},
+    {q:"Why is excessive agency a serious risk?",a:"When an AI system is given tools — calling APIs, querying databases, sending email — its permissions become its blast radius. If it can be manipulated through injection, it acts with whatever access it holds. The mitigation is standard least privilege plus human approval on consequential actions."}
+  ],
+  iq:[
+    {q:"How would you approach securing AI applications across the enterprise?",lvl:"scenario",pts:["Discovery first — you can't secure what you don't know exists; look at cloud API usage, SaaS integrations, and expense data","Inventory: which models, hosted where, what data they touch, who can call them","Classify by risk: internal productivity tool vs customer-facing vs anything touching PHI","Apply runtime guardrails at the model boundary — Model Armor or equivalent, both directions","Treat the AI's identity as an IAM problem — least privilege on the tools and data it can reach","Log prompts and responses for investigation, being careful about what sensitive data that captures","Extend posture management: are guardrails on, is logging enabled, is anything exposed publicly","Partner with the AI Security team named in the posting rather than acting alone","Note healthcare context — PHI in prompts is a HIPAA problem, not just a security one"]},
+    {q:"A team wants to build a chatbot over internal documents. What's your review?",lvl:"scenario",pts:["What's in the document set, and does the model's access respect the user's access rights","Indirect prompt injection — the documents are untrusted input to the model","Data leakage: can a user get the model to reveal a document they shouldn't see","Guardrails on input and output, plus sensitive data screening on responses","What can the model do beyond answering — any tools or actions raise the stakes sharply","Logging and retention, and whether prompts might contain PHI","Rate limiting and abuse monitoring","Reference the OWASP LLM Top 10 to structure the review rather than improvising"]}
+  ]
+},
+{
+  id:"appsec", n:5, title:"AppSec Scanning — SAST, DAST, SCA, Mobile", pri:5,
+  blurb:"Checkmarx, AppScan, Burp, JFrog Xray, NowSecure — what each class catches.",
+  lede:"Most of the named platforms are application security scanners. Know what each class sees, what it's blind to, and where it belongs in the lifecycle. Every one of them has a characteristic false-positive problem, and managing that is most of the operational work.",
+  onjob:"Onboarding repos to Checkmarx, running authenticated AppScan configurations, triaging Xray dependency findings, and tuning all of it so developers keep paying attention.",
+  points:[
+    "<b>SAST (Checkmarx)</b> — reads source without running it. Catches injection, unsafe deserialization, bad crypto. Runs early. High false positives because it lacks runtime context.",
+    "<b>DAST (AppScan, Burp)</b> — attacks a running application from outside. Catches auth flaws, misconfigured headers, exposed endpoints. Few false positives, but needs a deployed environment and finds issues late. Authenticated scan configuration is the fiddly part.",
+    "<b>SCA (JFrog Xray)</b> — inventories dependencies and matches them to known CVEs, plus license risk. Usually the largest source of real vulnerabilities, because most of an app is third-party code.",
+    "<b>Mobile (NowSecure)</b> — mobile-specific risks: insecure local storage, weak transport, hardcoded keys in the binary, tampering and reverse-engineering exposure.",
+    "<b>Secrets (Cycode)</b> — credentials in code and history. Covered in its own topic because the posting calls it out separately.",
+    "Reachability analysis is the modern answer to SCA noise: is the vulnerable function actually called by your code? It routinely cuts actionable findings by most of the list.",
+    "Triage discipline matters more than scanner selection. A tuned scanner with an owned queue beats a better scanner nobody reads."
+  ],
+  terms:[
+    {t:"SAST",d:"Static analysis of source code without executing it."},
+    {t:"DAST",d:"Dynamic testing against a running application."},
+    {t:"SCA",d:"Software Composition Analysis — vulnerable open-source dependencies."},
+    {t:"Authenticated scan",d:"A DAST scan configured with credentials so it can test past the login."},
+    {t:"Reachability",d:"Whether your code actually invokes the vulnerable dependency path."},
+    {t:"SBOM",d:"Software Bill of Materials — manifest of every component in a build."},
+    {t:"Transitive dependency",d:"A dependency of your dependency, which you never chose directly."},
+    {t:"Triage",d:"Validating and prioritizing findings before sending them to owners."}
+  ],
+  study:[
+    {q:"SAST vs DAST in one line each.",a:"SAST reads source code without running it — early, broad, more false positives. DAST attacks the running application from outside — later, fewer findings, but higher confidence because it demonstrated the behavior."},
+    {q:"Why is SCA usually the biggest source of real vulnerabilities?",a:"Most of a modern application is imported code. Your team wrote a small fraction of what ships, every dependency brings transitive dependencies, and nobody reviews them. The volume is high and the fixes are often just a version bump."},
+    {q:"What makes DAST operationally harder than SAST?",a:"It needs a running, reachable environment and usually authenticated access, so scan configuration involves credentials, session handling, and crawl scope. It can also generate load or create test data in the target, so scheduling and environment choice matter."},
+    {q:"How would you reduce SCA noise without ignoring real risk?",a:"Prioritize by reachability first — is the vulnerable function actually invoked. Then layer exposure: is the service internet-facing. Then look for batch fixes where one base image or framework upgrade closes many findings at once. Report on reachable-and-exposed rather than total count."}
+  ],
+  iq:[
+    {q:"How would you set up scanning coverage for an enterprise with hundreds of repos?",lvl:"scenario",pts:["Inventory first — you need to know how many repos exist and which are active","Prioritize by risk: internet-facing, handles sensitive data, actively developed","Onboard in waves, not all at once, so you can tune between waves","Baseline existing findings separately from new ones","Automate onboarding — a new repo should get scanning by default, not by request","Route results into the PR and into ticketing, not a separate portal","Track coverage percentage as the headline metric alongside findings","Define the exception process before teams start asking"]},
+    {q:"Developers say your SAST tool cries wolf. How do you respond?",lvl:"scenario",pts:["Assume they're right until measured — pull a sample and calculate the actual false positive rate","Tune aggressively: disable rules that don't fit the language or framework","Prioritize by reachability and exposure instead of raw severity","Surface findings in the PR with the fix suggestion attached","Pick one friendly team, prove the tuned workflow, use them as the reference","Report the false positive rate as a tracked metric so improvement is visible","Be willing to turn a rule off — a smaller trusted signal beats a large ignored one"]}
+  ]
+},
+{
+  id:"secrets", n:6, title:"Secrets Detection & SaaS Posture", pri:5,
+  blurb:"Cycode and AppOmni — two duties the posting calls out by name.",
+  lede:"The posting gives secrets detection and SaaS posture their own bullets, which means they're active workstreams, not background capability. Both are about a category of exposure that lives outside the traditional application boundary: credentials in code, and configuration in SaaS platforms nobody thinks of as infrastructure.",
+  onjob:"Running the Cycode secrets program — detection, remediation tracking, root cause, preventive controls — and expanding AppOmni coverage across the SaaS estate, including AI application discovery.",
+  points:[
+    "A committed secret is not fixed by deleting the line. It persists in Git history, in every clone and fork, and in CI logs. <b>Rotation is the remediation.</b> Everything else is cleanup.",
+    "The posting asks for root-cause analysis and preventive controls, not just detection — meaning the goal is fewer secrets committed, not more secrets found.",
+    "Prevention layers: pre-commit hooks catch it on the developer's machine, server-side push protection catches it at the repo, and a secrets manager removes the need to have one in code at all.",
+    "Remediation tracking needs a real workflow: detected → owner identified → rotated → verified → history handled → root cause logged.",
+    "<b>SSPM (AppOmni)</b> applies posture management to SaaS: external sharing, guest and stale accounts, OAuth app grants, admin role sprawl, MFA enforcement, data exposure settings.",
+    "OAuth grants are the underrated SaaS risk — a third-party app with broad delegated permissions is a standing backdoor nobody reviews.",
+    "SaaS is where AI application discovery often happens too, since most shadow AI arrives as a SaaS integration or an OAuth-connected app.",
+    "SaaS platforms are on the customer side of the shared responsibility model for configuration and access — the vendor secures the platform, not your settings."
+  ],
+  terms:[
+    {t:"Secrets scanning",d:"Detecting credentials, keys, and tokens in code, history, and logs."},
+    {t:"Rotation",d:"Replacing a credential so an exposed one becomes worthless — the actual fix."},
+    {t:"Push protection",d:"Server-side blocking of a push containing a detected secret."},
+    {t:"Pre-commit hook",d:"A local check that stops a secret before it becomes a commit."},
+    {t:"SSPM",d:"SaaS Security Posture Management — misconfiguration detection for SaaS apps."},
+    {t:"OAuth grant",d:"Delegated permission given to a third-party app to act on your data."},
+    {t:"External sharing",d:"SaaS settings allowing data access outside the organization."},
+    {t:"Shadow SaaS / AI",d:"Applications adopted without security review."}
+  ],
+  study:[
+    {q:"A secret was committed and removed in the next commit. What's the remediation?",a:"Rotate the credential immediately. The secret is still in Git history and in every clone, fork, and CI log that touched it. Removing the line changes nothing about exposure. Rotation invalidates it; history purging is optional cleanup afterward."},
+    {q:"What preventive controls stop secrets reaching the repo?",a:"Pre-commit hooks on developer machines, server-side push protection at the repository, a secrets manager or vault so there's no credential to hardcode, short-lived tokens and workload identity federation so there's nothing long-lived to leak, and developer education on the pattern."},
+    {q:"What does SSPM look for that CSPM doesn't?",a:"SaaS-specific configuration: external and public sharing, guest accounts, OAuth app grants, admin role assignments, MFA enforcement, data loss settings, and integration permissions. CSPM looks at cloud infrastructure you provision; SSPM looks at platforms you subscribe to."},
+    {q:"Why are OAuth grants a significant SaaS risk?",a:"A third-party app granted broad delegated permissions can read or act on organizational data indefinitely, often approved by a single user, and it's rarely reviewed afterward. If that vendor is compromised, the grant is a standing path into your data."}
+  ],
+  iq:[
+    {q:"Design a secrets management program — not just detection.",lvl:"scenario",pts:["Detect across code, history, pipelines, logs, and container images, not just current HEAD","Triage: validate the secret is live before triggering an emergency","Response workflow: identify owner, rotate first, then clean up history","Track remediation to verified closure, not just ticket closure","Root cause each one — was it a missing vault pattern, a tutorial copied, a CI limitation","Preventive layers: pre-commit hooks, push protection, vault adoption, short-lived credentials","Measure the right thing: secrets committed per month trending down, and mean time to rotate","Make the secure path easy — if using the vault is painful, people will hardcode"]},
+    {q:"How would you expand SSPM coverage across the SaaS estate?",lvl:"scenario",pts:["Start with an inventory — SSO logs, expense data, and network telemetry reveal shadow SaaS","Prioritize by data sensitivity: anything holding PHI or member data first in a healthcare org","Onboard highest-risk platforms first, baseline their posture, then tune","Engage each platform's business owner early — you need their admin cooperation","Focus early wins on external sharing, stale privileged accounts, and OAuth grants","Set up recurring access reviews rather than one-time cleanup","Feed findings into the same ticketing workflow as everything else","Report coverage as percentage of known SaaS applications onboarded"]}
+  ]
+},
+{
+  id:"cnapp", n:7, title:"CNAPP — Wiz & Prisma Cloud", pri:5,
+  blurb:"Cloud posture, entitlements, and turning a million findings into the twelve that matter.",
+  lede:"CNAPP merged half a dozen older acronyms into one platform: posture, entitlements, vulnerabilities, containers, IaC, and runtime. Both named platforms are in this category. The important idea isn't the feature list — it's risk prioritization, which is the reasoning interviewers actually test.",
+  onjob:"Triaging findings, tuning policies, chasing resource owners, building leadership dashboards, and working the vendor when detection is wrong or coverage is missing.",
+  points:[
+    "<b>CSPM</b> — continuous config checking against policy and compliance benchmarks. <b>CIEM</b> — entitlement analytics finding over-permissioned identities. <b>CWPP</b> — workload vulnerability and runtime. <b>IaC security</b> — the same policies applied pre-deployment.",
+    "Attack path analysis is the differentiator: chaining exposure + vulnerability + excessive permission + sensitive data into one reachable route. Wiz built its reputation here.",
+    "Wiz is agentless — snapshots and cloud APIs — so coverage is fast and broad but runtime visibility is thinner. Prisma Cloud spans agentless and agent-based Defenders with deeper runtime and container controls.",
+    "A critical CVE on an isolated internal box matters less than a medium on an internet-facing host with an admin role attached. Reasoning that way out loud is the answer they want.",
+    "Toxic combinations: individually moderate issues that become critical on the same resource.",
+    "Policy lifecycle is real operational work — new rule releases from the vendor change your finding volume overnight, which is why the posting mentions rule-release reviews.",
+    "Multi-cloud here: Azure, GCP, and AWS are all named, so know that posture concepts are portable even when service names aren't."
+  ],
+  terms:[
+    {t:"CNAPP",d:"Cloud-Native Application Protection Platform — the umbrella category."},
+    {t:"CSPM",d:"Continuous cloud configuration checking against policy."},
+    {t:"CIEM",d:"Entitlement management — finds identities with more permission than they use."},
+    {t:"CWPP",d:"Workload protection for VMs, containers, and serverless."},
+    {t:"Attack path",d:"A chained sequence of weaknesses producing real reachable risk."},
+    {t:"Agentless scanning",d:"Assessment via snapshots and cloud APIs rather than installed software."},
+    {t:"Toxic combination",d:"Moderate issues that become critical when co-located."},
+    {t:"Rule release",d:"A vendor policy update that changes what gets flagged."}
+  ],
+  study:[
+    {q:"What does CSPM do in one sentence?",a:"It continuously evaluates live cloud resource configuration against security policies and compliance benchmarks, and reports or auto-remediates the gaps."},
+    {q:"What is attack path analysis and why does it beat a findings list?",a:"It links exposure, vulnerability, permissions, and data sensitivity into a chain an attacker could actually walk. Instead of thousands of isolated findings you get a handful of real routes to something valuable, and breaking one link kills the whole path."},
+    {q:"Agentless vs agent-based — the trade-off?",a:"Agentless deploys in hours, covers everything the cloud API can see, and has no performance impact, but it's periodic and can't observe live process behavior. Agents give real-time detection and blocking but require deployment, maintenance, and resources."},
+    {q:"Why can a medium finding outrank a critical one?",a:"Severity scores describe the vulnerability in isolation, not your environment. A medium on an internet-facing host with a privileged role and sensitive data is a real path in. A critical on an isolated internal VM with no route to it is not urgent."},
+    {q:"Why do vendor rule releases matter operationally?",a:"A new policy release can add thousands of findings overnight against unchanged infrastructure, which looks like a sudden posture collapse and floods owner queues. That's why you review rule releases before they take effect and communicate expected volume changes ahead of time."}
+  ],
+  iq:[
+    {q:"Your CNAPP shows 8,000 open findings. Where do you start?",lvl:"scenario",pts:["Don't work top-down by severity — that's how teams burn out","Filter by exposure first: internet-facing, then identity-privileged, then sensitive data","Look for attack paths and toxic combinations rather than isolated issues","Group by root cause — one bad module or base image often explains hundreds","Fix upstream: the image, the module, the policy","Agree SLAs by severity plus exposure with engineering rather than imposing them","Report risk reduced and trend, not tickets closed"]},
+    {q:"A team says your CNAPP finding is a false positive. What do you do?",lvl:"scenario",pts:["Take it seriously — assume they might be right","Reproduce it against the actual resource configuration, not just the alert","Understand what the policy checks and whether it fits their context","If genuinely false, document it, suppress with a stated reason and expiry, raise it with the vendor","If real, explain the exploit path in their terms rather than quoting a policy ID","Either way close the loop so trust in the tool survives"]}
+  ]
+},
+{
+  id:"cloud", n:8, title:"Cloud Fundamentals — Azure, GCP, AWS", pri:5,
+  blurb:"The primitives every finding attaches to, across all three named clouds.",
+  lede:"All three clouds are named in this posting, with GCP appearing more prominently than in most enterprise roles because of Model Armor. You don't need depth in all three — you need one you know well and the ability to map its concepts onto the others.",
+  onjob:"Reading someone else's architecture, spotting the storage bucket open to the internet, and knowing whether a finding is a real exposure or an internal-only resource behind a private endpoint.",
+  points:[
+    "Shared responsibility: the provider secures <em>of</em> the cloud, you secure what you put <em>in</em> it. The line moves with IaaS vs PaaS vs SaaS.",
+    "Networking is where exposure lives: VNet/VPC, subnets, NSGs and firewall rules, public IPs, private endpoints and Private Service Connect.",
+    "Storage exposure is the recurring critical finding across all three — blob containers, S3 buckets, GCS buckets.",
+    "Identity naming: Entra ID (Azure) / IAM (AWS) / Cloud Identity and IAM (GCP). Workload identity: managed identity / IAM role / service account with workload identity federation.",
+    "Resource hierarchy differs and matters for policy scope: Azure management group → subscription → resource group; GCP organization → folder → project; AWS organization → OU → account.",
+    "GCP specifics worth knowing given the posting: projects as the isolation boundary, Organization Policy constraints, VPC Service Controls for data exfiltration boundaries, and Security Command Center as the native posture tool.",
+    "In healthcare, data residency and PHI handling constrain which regions and services are permitted at all."
+  ],
+  terms:[
+    {t:"Shared responsibility",d:"The split of security duties between provider and customer."},
+    {t:"VNet / VPC",d:"An isolated private network inside the cloud."},
+    {t:"Private endpoint",d:"A private IP reaching a managed service without traversing the internet."},
+    {t:"GCP project",d:"The primary resource and isolation boundary in Google Cloud."},
+    {t:"Organization Policy",d:"GCP guardrails constraining what resources can be created or configured."},
+    {t:"VPC Service Controls",d:"GCP perimeter limiting data movement out of a defined boundary."},
+    {t:"Security Command Center",d:"GCP's native security and posture management service."},
+    {t:"Management group",d:"Azure's scope above subscriptions for policy and access inheritance."}
+  ],
+  study:[
+    {q:"Explain the shared responsibility model in one sentence.",a:"The provider secures the underlying infrastructure — hardware, hypervisor, physical datacenter — while the customer secures their data, identities, configuration, and access. The more managed the service, the more the provider covers."},
+    {q:"Map the resource hierarchy across the three clouds.",a:"Azure: management group → subscription → resource group → resource. GCP: organization → folder → project → resource. AWS: organization → organizational unit → account → resource. Policy and permission inheritance flows down each of these."},
+    {q:"What are VPC Service Controls for?",a:"They create a perimeter around GCP resources that limits data movement out of the boundary, so even a valid credential can't exfiltrate data to a project outside the perimeter. It's a data exfiltration control layered on top of IAM."},
+    {q:"Why does a public IP on a VM get flagged?",a:"It exposes the machine's open ports directly to internet scanning. Any unpatched service or weak credential becomes remotely reachable. The safer pattern is private networking with a bastion, VPN, or managed access service."}
+  ],
+  iq:[
+    {q:"How do you approach securing an environment spanning Azure, GCP, and AWS?",lvl:"scenario",pts:["Start with inventory — you can't secure accounts and projects you don't know about","Define a common control baseline expressed per cloud, since the concepts port but the services don't","Use the CNAPP as the normalization layer so findings are comparable across clouds","Prioritize consistently regardless of cloud: exposure, identity, data sensitivity","Watch for gaps at the seams — cross-cloud connectivity and federated identity are often unowned","Acknowledge that expertise is usually uneven and lean on native tooling and cloud teams","Report unified posture to leadership rather than three separate stories"]},
+    {q:"A storage bucket is flagged as publicly accessible. How urgent is it?",lvl:"scenario",pts:["Confirm it's real — public network access and anonymous object access are different things","Determine what's in it; in healthcare, PHI changes the answer completely","Check access logs for evidence anyone external actually read it","Identify the owner and whether public access is intentional for a legitimate reason","Provide the fix: disable public access, use private connectivity or signed URLs with expiry","Escalate speed based on data sensitivity plus real exposure, not the scanner's default score","If PHI is involved, involve compliance and privacy immediately — it may be a reportable event"]}
+  ]
+},
+{
+  id:"reporting", n:9, title:"Metrics, Dashboards & Executive Reporting", pri:4,
+  blurb:"Half the posting's duties are communication artifacts. Take this seriously.",
+  lede:"Read the duty list again: build reports, dashboards, metrics, and executive summaries for tool health, risk posture, findings, remediation, and operational progress. That's an entire bullet, and it's the part candidates most often treat as an afterthought. Being good at this is disproportionately visible to leadership.",
+  onjob:"Weekly tool health reports, monthly posture dashboards, quarterly executive summaries, and whatever leadership asks for the day before a board meeting.",
+  points:[
+    "Different audiences need different reports. Analysts want detail and drill-down. Owners want their queue. Leadership wants trend, risk, and decisions.",
+    "Report trend, not totals. Open finding counts never reach zero, so a raw number tells nobody whether things are improving.",
+    "Metrics worth tracking: coverage percentage, mean time to remediate by severity, SLA adherence, false positive rate, scan success rate, findings introduced vs resolved, and remediation verified by rescan.",
+    "Findings introduced vs resolved is the single most honest chart — it shows whether you're gaining or losing ground.",
+    "Report coverage gaps explicitly. What the tools can't see is as important as what they found, and hiding it is how programs get blindsided.",
+    "Executive summaries: lead with the answer, keep it to one page, use business language, include two or three specific asks with cost and benefit. Detail goes in an appendix.",
+    "Never surprise leadership in a deck. Anything significant gets raised before the meeting.",
+    "Dashboards need an owner and a review cadence, or they go stale and quietly become wrong."
+  ],
+  terms:[
+    {t:"MTTR",d:"Mean time to remediate — average time from detection to verified fix."},
+    {t:"SLA adherence",d:"Percentage of findings remediated within the agreed window."},
+    {t:"Coverage",d:"Percentage of the estate the tool actually sees."},
+    {t:"Burn-down",d:"Chart showing findings resolved against those introduced over time."},
+    {t:"Leading indicator",d:"A metric predicting future outcomes, like scan coverage."},
+    {t:"Lagging indicator",d:"A metric describing what already happened, like incidents."},
+    {t:"Executive summary",d:"One-page, decision-oriented framing for leadership."}
+  ],
+  study:[
+    {q:"Why is total open findings a poor headline metric?",a:"It never reaches zero, it grows as coverage grows, and it conflates a scanner improvement with a security regression. Trend and rate metrics — introduced vs resolved, MTTR, SLA adherence — tell you whether the program is actually working."},
+    {q:"Name five metrics worth reporting for a security tool program.",a:"Coverage percentage against intended scope, mean time to remediate by severity, SLA adherence rate, scan success rate and tool uptime, false positive rate, and findings introduced versus resolved."},
+    {q:"How does an executive summary differ from an analyst report?",a:"Executive: one page, leads with the answer, business impact framing, trend not detail, two or three specific asks with cost and benefit, no tool names or CVE numbers. Analyst: full detail, drill-down, technical specifics, and the raw data."},
+    {q:"Why report coverage gaps rather than hiding them?",a:"Because a report showing only what you found implies you looked everywhere. If leadership makes a risk decision believing coverage is complete when it's at 60%, that's a much worse failure than admitting the gap and asking for what closes it."}
+  ],
+  iq:[
+    {q:"Build me a dashboard for leadership on our security tooling. What's on it?",lvl:"scenario",pts:["Start by asking what decisions this dashboard supports — that determines everything","Top line: overall risk trend and whether it's improving","Coverage per tool against intended scope, shown honestly including gaps","Findings introduced vs resolved over time — the honest picture of whether we're gaining ground","MTTR and SLA adherence by severity","Tool health: scan success rate and integration status","Two or three open asks with cost and benefit","Keep it one screen; detail lives one click down","Define the refresh cadence and who owns keeping it accurate"]},
+    {q:"Leadership asks why the number of findings went up this quarter. How do you answer?",lvl:"scenario",pts:["Diagnose before answering — increased findings usually means increased coverage or a vendor rule release","Separate the causes: more scope onboarded, new policies released, or genuinely worse posture","Show the normalized view — findings per asset, or findings on assets scanned in both periods","If it's coverage growth, frame it as visibility improving, which is progress not regression","If posture genuinely degraded, say so directly and bring the cause and the plan","Use it to make the case for the coverage metric permanently, so this question doesn't recur"]}
+  ]
+},
+{
+  id:"compliance", n:10, title:"Regulated Enterprise — Audit, Change & Access Reviews", pri:4,
+  blurb:"Humana is healthcare. Compliance context changes how everything gets done.",
+  lede:"The posting explicitly asks for experience in regulated enterprise environments with audit, compliance, change management, and access review expectations. In healthcare that means HIPAA and PHI, and it means the how of your work is scrutinized as much as the what. Candidates who only talk about technical controls miss this entirely.",
+  onjob:"Evidence collection for audits, change requests before touching production tooling, quarterly access reviews on the security platforms themselves, and documented exceptions with owners and expiry dates.",
+  points:[
+    "<b>PHI</b> — Protected Health Information — is the crown jewel. Its presence changes severity, urgency, notification obligations, and which regions and services are permitted.",
+    "<b>HIPAA</b> sets the Security Rule requirements: administrative, physical, and technical safeguards, plus breach notification. <b>HITRUST</b> is the common certification framework layered on top.",
+    "Compliance needs evidence, not assertions. \u201CWe scan everything\u201D is worthless to an auditor; a coverage report with dates and scope is evidence.",
+    "<b>Change management</b> means production changes are reviewed, approved, scheduled, and reversible. Yes, that includes tuning a security policy that could flood queues or block a pipeline.",
+    "<b>Access reviews</b> apply to the security tools too — who has admin in Wiz, who can suppress findings, who can disable a policy. That's a privileged access problem.",
+    "Exceptions must be documented with a named owner, a business justification, a compensating control, and an expiry date. An exception without an expiry is just an undocumented risk.",
+    "Least privilege and separation of duties get audited specifically: can one person both create and approve a change.",
+    "Frameworks worth naming: NIST CSF, NIST 800-53, CIS Benchmarks, HIPAA Security Rule, HITRUST, SOC 2. Know what each is for rather than memorizing controls."
+  ],
+  terms:[
+    {t:"PHI",d:"Protected Health Information — identifiable health data under HIPAA."},
+    {t:"HIPAA Security Rule",d:"Required administrative, physical, and technical safeguards for ePHI."},
+    {t:"HITRUST",d:"A certifiable framework harmonizing HIPAA with other standards."},
+    {t:"Change management",d:"Reviewed, approved, scheduled, reversible production changes."},
+    {t:"Access review",d:"Periodic recertification that access is still needed and appropriate."},
+    {t:"Evidence",d:"Artifacts proving a control operated — logs, reports, approvals, tickets."},
+    {t:"Compensating control",d:"An alternative mitigation when the primary control isn't feasible."},
+    {t:"Separation of duties",d:"No single person controls an entire sensitive process end to end."},
+    {t:"CIS Benchmarks",d:"Prescriptive hardening baselines per platform."}
+  ],
+  study:[
+    {q:"Why does a regulated environment change how you do security work?",a:"Because how you did it is auditable. Changes need approval and a record, access needs periodic recertification, exceptions need documentation and expiry, and controls need evidence they actually operated. The technical fix is only half the deliverable."},
+    {q:"What makes PHI different from other sensitive data?",a:"It carries regulatory obligations under HIPAA including specific safeguards and breach notification timelines. Its presence escalates severity automatically, constrains which services and regions can be used, and means an exposure may be legally reportable rather than just a security incident."},
+    {q:"Why would tuning a security policy require change management?",a:"Because it can change production behavior — flooding ticket queues, blocking pipelines, or suppressing findings that an auditor expects to see. It's a change to a control, and control changes are exactly what change management exists to govern."},
+    {q:"What belongs in a documented exception?",a:"What the risk is, why the standard control can't be applied, what compensating control is in place instead, who the accountable owner is, when it expires, and who approved it. Without an expiry it's not an exception, it's a permanent unmanaged risk."},
+    {q:"What's separation of duties and why do auditors care?",a:"No single person should control an entire sensitive process — the person requesting a change shouldn't be the one approving it. Auditors care because it's the primary control against both fraud and unilateral error."}
+  ],
+  iq:[
+    {q:"How do you balance security speed with change management in a regulated environment?",lvl:"scenario",pts:["Accept the constraint rather than treating it as an obstacle — it exists for a reason","Pre-approve standard changes so routine work isn't gated every time","Have an emergency change path defined in advance, with retroactive review","Batch related changes into a single reviewed release","Document as you go so the evidence isn't a separate project later","Involve compliance early rather than asking forgiveness — they're faster as a partner than as a reviewer","Note that good change management also prevents self-inflicted outages, which is a security benefit"]},
+    {q:"An auditor asks for evidence that your scanning covers all production applications. What do you provide?",lvl:"scenario",pts:["A coverage report showing scanned assets against the authoritative application inventory","The source of that inventory and how it's maintained — this is usually the weak link","Scan success and failure history over the audit period, not just a point in time","Documented exceptions for anything out of scope, with justification and approval","The SOP describing how new applications get onboarded to scanning","Be honest about gaps — auditors respond far worse to discovering a gap than to being told about one","Show the remediation plan for any gap you disclose"]}
+  ]
+},
+{
+  id:"iam", n:11, title:"Identity & Access Management", pri:4,
+  blurb:"Who can do what, where, and for how long — including inside your security tools.",
+  lede:"Identity replaced the network as the primary control plane in cloud. The posting lists IAM as a partner team and calls out tool access reviews specifically, so this shows up both as environment risk and as governance of the platforms you own.",
+  onjob:"Reviewing role assignments, hunting over-permissioned service principals, running access reviews on the security tools themselves, and pushing teams from stored secrets toward workload identity.",
+  points:[
+    "Least privilege: minimum permission, narrowest scope, shortest duration. Everything in IAM is a version of this.",
+    "Human vs workload identities. Service accounts, service principals, and managed identities are non-human and usually the ones nobody audits.",
+    "Managed identity and workload identity federation remove the stored credential entirely — the platform issues short-lived tokens. Prefer them over app secrets.",
+    "Privileged access should be just-in-time and time-bound with approval and audit trail, not a permanent admin assignment.",
+    "MFA and Conditional Access enforce context: who, from where, on what device, to which app.",
+    "<b>CIEM</b> compares permissions granted against permissions actually used, which is how you find the gap at scale.",
+    "Access reviews apply to your own tools: who's admin in Wiz, who can suppress a finding, who can disable a scanning policy. In a regulated environment this gets audited.",
+    "Permission creep is the quiet failure mode — access granted for a project and never revoked."
+  ],
+  terms:[
+    {t:"RBAC",d:"Role-Based Access Control — permissions bundled into roles at a scope."},
+    {t:"Least privilege",d:"Only the permissions actually needed, and nothing more."},
+    {t:"Service principal",d:"An identity representing an application rather than a person."},
+    {t:"Managed identity",d:"A platform-managed workload identity with no secret to store or leak."},
+    {t:"Workload identity federation",d:"Trust between identity providers so no long-lived secret is needed."},
+    {t:"Conditional Access",d:"Policy allowing or blocking sign-in based on context and risk."},
+    {t:"JIT access",d:"Temporary elevation with approval and automatic expiry."},
+    {t:"CIEM",d:"Entitlement analytics finding over-permissioned identities."}
+  ],
+  study:[
+    {q:"Authentication vs authorization?",a:"Authentication proves who you are — credentials, MFA. Authorization decides what you're allowed to do once in — roles, permissions, policy. AuthN first, AuthZ second."},
+    {q:"Why is a managed identity better than an app secret?",a:"There's no credential to leak, commit, or forget to rotate. The platform issues short-lived tokens automatically and access is governed by role assignment rather than by whoever holds the string."},
+    {q:"What is privilege creep and how do you fix it?",a:"Permissions accumulate as people change roles or finish projects and nothing gets removed. Fixes are periodic access reviews, JIT elevation instead of standing roles, and CIEM analytics comparing granted against used permissions."},
+    {q:"Why do access reviews apply to security tools themselves?",a:"Because admin in a security platform is privileged access — someone who can suppress findings, disable policies, or change scan scope can hide risk, accidentally or otherwise. In a regulated environment that's an audited control."}
+  ],
+  iq:[
+    {q:"How would you run an access review across the security tool portfolio?",lvl:"scenario",pts:["Inventory the tools and their access models first — they all differ","Pull current access lists including admin, suppression, and policy-edit rights","Map each to a business justification and an accountable owner","Route to owners for recertification rather than deciding unilaterally","Focus on privileged tiers and dormant accounts first","Remove what isn't recertified, with a grace period and clear communication","Capture the evidence — auditors will want the artifact, not just the outcome","Automate the recurrence so it's quarterly by default, not a project each time"]},
+    {q:"A developer says they need Owner on the subscription to deploy. What do you say?",lvl:"scenario",pts:["Ask what specific operation is failing — it's nearly always one or two permissions","Offer the narrowest role that covers it, or a custom role","Scope it down: resource group instead of subscription","Offer time-bound elevation if they genuinely need broad rights temporarily","Frame it as unblocking them, not blocking them","Document the exception with an expiry if you have to grant it"]}
+  ]
+},
+{
+  id:"cicd", n:12, title:"CI/CD & Pipeline Security", pri:4,
+  blurb:"Azure DevOps and GitHub — where the scanners live and the credentials sit.",
+  lede:"CI/CD appears twice in the posting: as an integration target for the tools and as ADO and GitHub specifically. The pipeline is production — it holds credentials to every environment and deploys code with no human in the loop — and it's also where most of your scanners will run.",
+  onjob:"Adding scanning tasks to pipelines, defining what blocks a merge, protecting pipeline credentials, and troubleshooting the build that started failing after a scanner update.",
+  points:[
+    "Branch protection: no direct pushes to main, required reviewers, required status checks.",
+    "Security gates decide what blocks. Be explicit and agreed: which severities fail a build, and who can override.",
+    "Pipeline secrets belong in a key vault or secret store with short-lived tokens, never in YAML and never in build logs.",
+    "Pin third-party actions and tasks to a commit SHA rather than a floating tag, so an upstream compromise doesn't reach you.",
+    "Least privilege for the pipeline identity: separate service connections per environment, no single admin credential across dev, test, and prod.",
+    "Fast checks gate the pull request; heavy scans run asynchronously so the pipeline stays usable. A gate that adds twenty minutes gets bypassed.",
+    "Break-glass must exist and be documented. If it's used weekly, your gating rules are wrong, not the developers.",
+    "Pipeline YAML changes are security-relevant events and should be logged and reviewed."
+  ],
+  terms:[
+    {t:"Security gate",d:"A pipeline check that must pass before code progresses."},
+    {t:"Branch protection",d:"Rules preventing unreviewed or direct changes to key branches."},
+    {t:"Service connection",d:"Stored credentials letting a pipeline authenticate to an environment."},
+    {t:"Pinning",d:"Locking a dependency or action to an immutable version or commit."},
+    {t:"Break-glass",d:"A documented emergency override with approval and retroactive review."},
+    {t:"Runner / agent",d:"The machine executing pipeline jobs."},
+    {t:"Variable group",d:"Azure DevOps construct for shared pipeline variables, ideally vault-backed."}
+  ],
+  study:[
+    {q:"Why is the CI/CD pipeline a high-value target?",a:"It holds credentials to every environment, it can push to production without human approval, and its output is trusted downstream. Compromise it and you ship your change through the front door rather than attacking production directly."},
+    {q:"Why pin an action to a SHA instead of a tag?",a:"Tags are mutable. Whoever owns the action can repoint v3 at malicious code and it flows into your build automatically. A commit SHA is immutable, so you only run code you reviewed."},
+    {q:"What's a sensible rule for what blocks a build?",a:"Block on findings that are fast to detect, unambiguous, and severe — exposed secrets, critical reachable vulnerabilities, high-severity misconfigurations on production paths. Report everything else. The rule should be agreed with engineering and have a defined override path."},
+    {q:"Where should pipeline secrets live?",a:"In a key vault or managed secret store, injected at runtime, scoped to the specific pipeline, short-lived, and masked in logs. Better still, workload identity federation so there's no long-lived secret at all."}
+  ],
+  iq:[
+    {q:"How would you add security scanning to pipelines without engineering revolting?",lvl:"scenario",pts:["Start in warn-only mode to establish a baseline and measure the noise","Tune out false positives before enforcing anything","Agree in writing which severities block a merge","Keep gating checks fast; run deep scans asynchronously","Surface results in the PR where the developer already is","Ship the fix suggestion alongside the finding","Baseline existing debt separately so new code is held clean","Define break-glass up front and track its usage as a signal your rules need adjusting"]},
+    {q:"A scanner update starts failing builds across the org. What do you do?",lvl:"scenario",pts:["Establish blast radius immediately — how many pipelines, which teams","Communicate before you're asked; teams are already blocked","Roll back or pin to the previous version to unblock, then diagnose","Determine whether it's a real new detection or a tool regression","If it's real findings from a new rule, switch to warn mode temporarily rather than blocking","Work the vendor with specifics if it's a product defect","Post-incident: why did an update reach production tooling without a canary or staged rollout"]}
+  ]
+},
+{
+  id:"vulnmgmt", n:13, title:"Vulnerability Management", pri:4,
+  blurb:"Finding, prioritizing, fixing, verifying — the loop behind most findings.",
+  lede:"Vulnerability management is a program, not a scan. Anyone can produce a list of CVEs; the skill is deciding what to fix first with limited engineering time and proving risk actually went down. This underpins the Scan & Triage partnership named in the posting.",
+  onjob:"Translating raw findings into prioritized work for owning teams, negotiating SLAs, handling exceptions, and verifying fixes actually landed.",
+  points:[
+    "Lifecycle: discover assets → scan → prioritize → assign → remediate → verify → report.",
+    "CVE is the identifier. CVSS is the base severity score. Neither knows anything about your environment.",
+    "Real prioritization = CVSS + exploitability (KEV, EPSS) + exposure + asset value + compensating controls.",
+    "Asset inventory is the foundation and usually the weakest link. You cannot patch what you don't know exists.",
+    "Validate before escalating. Sending an engineer after a false positive costs credibility you need later.",
+    "When patching isn't possible: compensating controls plus a documented, time-bound exception.",
+    "Verification closes the loop — a ticket marked done is a claim, a clean rescan is evidence.",
+    "Report trend and risk reduction, not raw open counts that never reach zero."
+  ],
+  terms:[
+    {t:"CVE",d:"The unique public identifier for a known vulnerability."},
+    {t:"CVSS",d:"0-10 base severity score for a vulnerability in isolation."},
+    {t:"EPSS",d:"Probability a vulnerability will be exploited in the wild."},
+    {t:"KEV",d:"CISA's catalog of vulnerabilities confirmed exploited in the real world."},
+    {t:"Compensating control",d:"Alternative mitigation when the fix isn't available."},
+    {t:"SLA",d:"Agreed maximum remediation time, tiered by severity."},
+    {t:"Exception",d:"Documented, approved, time-bound acceptance of a known risk."}
+  ],
+  study:[
+    {q:"Difference between CVE and CVSS?",a:"CVE is the identifier — a unique name for a specific vulnerability. CVSS is the scoring system rating its severity 0 to 10. One names it, the other rates it."},
+    {q:"Why isn't CVSS enough to prioritize?",a:"It scores the vulnerability in isolation with no knowledge of your environment — not whether the system is internet-facing, whether an exploit exists, whether the component is even reachable, or how valuable the asset is."},
+    {q:"What do you do about a critical CVE with no patch?",a:"Apply compensating controls: isolate the system, restrict access, disable the vulnerable feature, add detection for exploitation attempts. Document a time-bound exception with an owner and monitor for the patch."},
+    {q:"How do you prove remediation happened?",a:"Rescan and confirm the finding is gone. A closed ticket is a claim; a clean rescan is evidence. Track verified closure rate rather than ticket closure rate."}
+  ],
+  iq:[
+    {q:"Engineering says they have no capacity for your findings this quarter. What now?",lvl:"scenario",pts:["Understand their actual constraints before escalating","Cut the list to what genuinely matters — exposure and exploitability, not everything","Look for batch fixes: one base image or module update closing hundreds of findings","Offer to do the work where you can — draft the PR, test the upgrade","Propose compensating controls for the remainder","Make the residual risk visible to the accountable owner in business terms","Have them formally accept it with an expiry rather than letting it disappear"]},
+    {q:"A critical vulnerability drops with active exploitation. Walk me through the first 24 hours.",lvl:"scenario",pts:["Establish exposure first — where is the affected component, including transitive and vendor products","Use SCA and SBOM data if available; query vendors in parallel","Prioritize internet-facing and privileged systems","Apply the fastest safe mitigation while patching proceeds","Communicate early to leadership: what we know, what we don't, what we're doing","Hunt for prior exploitation, not just patch forward","Run it as an incident with a single owner and a running timeline","In healthcare, involve compliance early if PHI systems are affected"]}
+  ]
+},
+{
+  id:"automation", n:14, title:"Automation, APIs & Scripting", pri:4,
+  blurb:"Python, REST, JSON — the posting says \u201Cautomate repeatable processes\u201D explicitly.",
+  lede:"You're not expected to be a software engineer. You are expected to pull data from an API, transform it, and push it somewhere useful — because every integration and every report in this role runs on that skill. The posting names automation as a core duty twice.",
+  onjob:"Pulling findings from Wiz or Cycode via API, enriching with owner data, creating ServiceNow tickets, and generating the weekly report nobody wants to build by hand.",
+  points:[
+    "Pick one language and be useful in it. Python is the common choice; PowerShell for Azure and M365; Bash for glue.",
+    "REST verbs: GET reads, POST creates, PUT replaces, PATCH partially updates, DELETE removes.",
+    "Status codes to know cold: 200, 201, 400, 401 unauthenticated, 403 authenticated but not permitted, 404, 429 rate limited, 500.",
+    "Auth patterns: API key header, bearer token, OAuth 2.0 client credentials for service-to-service.",
+    "Handle pagination and rate limits or your script silently processes 10% of the data and reports success.",
+    "Idempotency matters in this role specifically — a rerun must not create duplicate tickets.",
+    "Never hardcode credentials. Environment variables, a vault, or a managed identity.",
+    "Log what the automation did and alert when it stops. A silent automation failure is worse than no automation."
+  ],
+  terms:[
+    {t:"REST API",d:"HTTP interface where URLs identify resources and verbs define actions."},
+    {t:"Bearer token",d:"Credential in the Authorization header granting access for its lifetime."},
+    {t:"OAuth 2.0 client credentials",d:"The service-to-service authorization flow."},
+    {t:"Pagination",d:"Splitting large result sets across pages you must iterate."},
+    {t:"Rate limiting",d:"Server-side caps on request volume, signalled by 429."},
+    {t:"Idempotent",d:"Running it twice produces the same end state as running it once."},
+    {t:"Webhook",d:"An HTTP callback fired by the source when an event occurs."}
+  ],
+  study:[
+    {q:"401 vs 403?",a:"401 means not authenticated — bad, missing, or expired credentials. 403 means authenticated but this identity isn't permitted. 401 is 'who are you', 403 is 'not allowed'."},
+    {q:"You get a 429. What now?",a:"You're rate limited. Back off and retry with exponential backoff, respecting Retry-After if present. Also reduce volume — batch, cache, or use a bulk endpoint instead of one call per item."},
+    {q:"Why does idempotency matter for security automation specifically?",a:"Because these jobs run on schedules against findings that persist. If creating a ticket isn't idempotent, a daily job turns one finding into thirty tickets, and the owning team stops trusting the queue entirely."},
+    {q:"Describe a realistic automation for this role.",a:"Pull open critical findings from the CNAPP API on a schedule, enrich each with resource owner from tags or CMDB, filter out approved exceptions, create or update a ServiceNow ticket per owner, push a summary event to Splunk, and post a weekly digest to Teams."}
+  ],
+  iq:[
+    {q:"Describe an automation you'd build for this team and how you'd make it reliable.",lvl:"scenario",pts:["Name a real repetitive task from the posting: findings-to-tickets, tool health reporting, access review data collection","Identify the source APIs and the auth method for each","Use a service identity with read-only permissions where possible","Handle pagination, rate limits, and partial failures explicitly","Make it idempotent so reruns don't duplicate","Secrets from a vault, code in version control, scheduled in a pipeline","Log every run and alert on failure or on anomalous volume","Document it as an SOP so it isn't only in your head"]}
+  ]
+},
+{
+  id:"vendor", n:15, title:"Vendor Management, QBRs & Documentation", pri:4,
+  blurb:"Rule releases, escalations, SOPs, and KT docs — all named duties.",
+  lede:"The posting explicitly lists vendor cadences, QBRs, rule-release reviews, roadmap discussions, SOPs, playbooks, KT documentation, and escalation paths. Owning ten platforms means owning ten vendor relationships and the documentation that keeps the team functional when you're on leave.",
+  onjob:"Running the monthly health check with the Wiz team, escalating a broken Checkmarx integration, reviewing a Cycode rule release before it hits production, and writing the runbook so the next person can do it.",
+  points:[
+    "A <b>QBR</b> is a working meeting, not a demo. Come with usage data, open issues, roadmap asks, and a view on whether the tool is delivering value.",
+    "<b>Rule-release reviews</b> matter operationally: a vendor policy update can add thousands of findings overnight. Review before it lands and communicate expected volume changes.",
+    "Escalations need specifics — case numbers, timestamps, reproduction steps, business impact, what you already tried, and what you're asking for by when. Then follow up in writing.",
+    "Know your support tier, your SLA, and your named contact before you need them.",
+    "<b>SOPs</b> document recurring tasks. <b>Playbooks</b> document response to a situation. <b>KT docs</b> transfer ownership. They're different artifacts and interviewers may check you know that.",
+    "Write documentation for the person who joins next month, not for yourself. The test is whether someone else can execute it without asking you.",
+    "Adapt to audience: developers want the fix, leadership wants the decision, auditors want the evidence, vendors want reproducible detail.",
+    "Escalate with a recommendation, not just a problem."
+  ],
+  terms:[
+    {t:"QBR",d:"Quarterly Business Review — recurring vendor performance and roadmap meeting."},
+    {t:"Rule release",d:"A vendor policy update changing what the tool flags."},
+    {t:"Health check",d:"Recurring review of tool status, coverage, and open issues."},
+    {t:"SOP",d:"Standard Operating Procedure for a recurring task."},
+    {t:"Playbook",d:"Documented response procedure for a specific situation."},
+    {t:"KT documentation",d:"Knowledge transfer material enabling someone else to take ownership."},
+    {t:"Escalation path",d:"Defined route for raising an unresolved issue."},
+    {t:"Roadmap ask",d:"A feature or fix you're pushing the vendor to prioritize."}
+  ],
+  study:[
+    {q:"What do you bring to a QBR?",a:"Usage and coverage data, open issues with case numbers and age, whether SLAs were met, roadmap asks tied to real gaps you've hit, and a view on value delivered. It's a two-way accountability meeting, not a vendor presentation."},
+    {q:"Why review a vendor rule release before it takes effect?",a:"A new policy set can add thousands of findings against unchanged infrastructure. That looks like sudden posture collapse, floods owner queues, and can break pipeline gates. Reviewing first lets you stage it, tune it, and warn people about expected volume."},
+    {q:"SOP vs playbook vs KT doc?",a:"An SOP is the procedure for a recurring task — how to onboard a repo. A playbook is the response to a situation — what to do when scans fail across the org. A KT doc transfers ownership of a system, covering architecture, access, contacts, and known issues."},
+    {q:"How do you structure a vendor escalation?",a:"State the business impact first, then the specifics: case number, timestamps, affected scope, reproduction steps, what you've already tried. Then a clear ask with a date. Follow up in writing after any call so there's a record of what was committed."}
+  ],
+  iq:[
+    {q:"A vendor's tool has been broken for two weeks and support isn't moving. What do you do?",lvl:"scenario",pts:["Quantify the business impact — coverage lost, findings missed, teams blocked","Consolidate the evidence into one clear case rather than scattered tickets","Escalate through the defined path: support manager, then account team","Set a specific ask with a date rather than a general complaint","Put an interim mitigation in place so you're not fully blind while waiting","Keep internal stakeholders informed so the gap is visible and owned","Log it for the QBR — a pattern of slow support is a contract conversation","Stay professional; you need this relationship for the next issue"]},
+    {q:"How would you document a tool you own so someone else could take it over?",lvl:"scenario",pts:["Architecture: what it connects to, how data flows, where it runs","Access: who has what, how to request it, which service accounts exist and when they rotate","Recurring tasks as SOPs with actual steps, not summaries","Known issues and their workarounds — the things only you currently know","Escalation path and vendor contacts with case history","Metrics: what's reported, to whom, on what cadence","Test it by having someone else follow it without your help","Keep it where people will find it and set a review date so it doesn't rot"]},
+    {q:"How do you explain a technical finding to leadership versus to a developer?",lvl:"core",pts:["Developer: exact resource or line, the exploit path, the fix, a realistic timeline","Leadership: business impact, options with cost and effort, a recommendation, a decision to make","Drop tool names and CVE numbers for leadership; keep them for engineers","Lead with impact in both cases, not with the policy that fired","Check comprehension rather than assuming it","Same facts, different altitude — never a different story"]}
+  ]
+},
+{
+  id:"foundations", n:16, title:"Security Foundations & OWASP", pri:3,
+  blurb:"The principles you reason from when asked about something you've never seen.",
+  lede:"Tools change, principles don't. When you get a question about a platform you've never touched, these are what let you reason to a sensible answer — which is exactly what a good interviewer is testing. Keep this section light; it's the fallback layer, not the focus of this role.",
+  onjob:"These are the arguments made in design reviews and the reason a given policy exists in the first place.",
+  points:[
+    "Least privilege, defense in depth, zero trust, fail securely, encryption in transit and at rest, secrets management, logging and monitoring, secure SDLC.",
+    "Zero Trust in three parts: verify explicitly, use least privilege, assume breach.",
+    "OWASP Top 10 (2021) headline items: Broken Access Control, Cryptographic Failures, Injection, Insecure Design, Security Misconfiguration, Vulnerable Components, Auth Failures, Integrity Failures, Logging Failures, SSRF.",
+    "OWASP Top 10 for LLM Applications is the AI equivalent and worth naming given this role.",
+    "SSRF is especially dangerous in cloud because it can reach the instance metadata endpoint and steal workload credentials.",
+    "Incident response phases: Preparation, Detection &amp; Analysis, Containment, Eradication, Recovery, Lessons Learned. You'll partner with CSOC rather than lead it, but know the shape.",
+    "In cloud, containment often means revoking tokens and disabling identities rather than isolating a machine. Snapshot before you destroy."
+  ],
+  terms:[
+    {t:"Defense in depth",d:"Layered independent controls so one failure isn't a breach."},
+    {t:"Zero Trust",d:"Verify explicitly, least privilege, assume breach."},
+    {t:"Broken access control",d:"Users acting outside permissions; #1 on the OWASP Top 10."},
+    {t:"SSRF",d:"Tricking a server into making attacker-chosen requests, often to metadata endpoints."},
+    {t:"Fail secure",d:"On error, deny rather than allow."},
+    {t:"Containment",d:"Limiting an incident's spread before eradicating it."},
+    {t:"Blast radius",d:"The scope of what a compromised identity or resource could reach."}
+  ],
+  study:[
+    {q:"What are the three principles of Zero Trust?",a:"Verify explicitly using all available signals, use least privilege with just-in-time and just-enough access, and assume breach — segment, encrypt, monitor, and design as if the attacker is already inside."},
+    {q:"Why is SSRF especially dangerous in cloud?",a:"Cloud instances expose an internal metadata endpoint returning credentials for the attached identity. If an attacker can make the server issue requests of their choosing, they can reach it and steal working cloud credentials. IMDSv2 and equivalents exist to mitigate this."},
+    {q:"List the six incident response phases.",a:"Preparation, Detection & Analysis, Containment, Eradication, Recovery, Lessons Learned."},
+    {q:"What does containment look like for a compromised cloud identity?",a:"Revoke active sessions and refresh tokens, disable the account or rotate the credential, remove elevated role assignments, and review what it did while compromised. A password change alone leaves existing tokens valid."}
+  ],
+  iq:[
+    {q:"You're asked about a security technology you've never used. How do you handle it?",lvl:"core",pts:["Say plainly that you haven't used it — never bluff","Name the category if you can identify it","Reason from principles: what would it need to do, what would it integrate with, what would the failure modes be","Draw an analogy to something you have used","Ask a clarifying question if that helps you reason","Close by saying how you'd get up to speed on it","This answer scores far higher than a confident wrong one"]}
+  ]
+},
+{
+  id:"traits", n:17, title:"Behavioral & Fit", pri:4,
+  blurb:"Cross-functional is in the first paragraph of the posting. This gets weighted heavily.",
+  lede:"Read the partner list in the posting: Product Security, DevSecOps, Cloud Engineering, AI Security, Security Architecture, Scan & Triage, CSOC/TMR, IAM, application teams, and vendors. Ten stakeholder groups. It also says \u201Coperate independently\u201D and \u201Ccommunicate clearly with technical and leadership stakeholders.\u201D Those are the traits being screened.",
+  onjob:"You'll have no authority over any of the teams whose findings you're chasing. Influence and clarity are the actual job skills.",
+  points:[
+    "Every trait needs a specific story, not an adjective. Use STAR: Situation, Task, Action, Result — with most of the time on Action and Result.",
+    "\u201COperate independently\u201D means ambiguity tolerance: given a vague problem, you scope it and make progress without being managed. Have a story for this.",
+    "\u201CCross-functional\u201D means influence without authority. Have a story about getting someone to act who didn't report to you.",
+    "Have a story about a tool or process you improved — that's this role's core narrative.",
+    "Have a story about explaining something technical to a non-technical audience.",
+    "Have a failure story with a real consequence and a concrete change afterward.",
+    "Prepare four questions to ask them: what the first 90 days look like, which tool is causing the most operational pain right now, how the team measures success, where the AI security work is heading.",
+    "Continuous learning is a stated required qualification — be ready with what you're actively learning and why."
+  ],
+  terms:[
+    {t:"STAR",d:"Situation, Task, Action, Result — the behavioral answer structure."},
+    {t:"Influence without authority",d:"Getting action from people who don't report to you."},
+    {t:"Ownership",d:"Following an issue to resolution without being chased."},
+    {t:"Ambiguity tolerance",d:"Making progress on an under-specified problem."}
+  ],
+  study:[
+    {q:"What does STAR stand for and where's the emphasis?",a:"Situation, Task, Action, Result. Keep situation and task to two sentences. Spend the bulk on what you personally did and what measurably resulted. Interviewers listen for 'I', not 'we'."},
+    {q:"How many prepared stories do you need?",a:"Five or six versatile ones: a hard technical problem, pushback or conflict, a failure and the lesson, something you owned end to end, something you learned fast, and explaining technical content to a non-technical audience."},
+    {q:"How do you answer a gap in experience with a named tool?",a:"State it plainly, name the category and a comparable tool you have used, describe what you'd expect to be true of it, and give your concrete plan to close the gap. Honest reasoning beats a confident bluff every time."}
+  ],
+  iq:[
+    {q:"Tell me about a time you had to get something done through a team that didn't report to you.",lvl:"behavioral",pts:["Situation: who they were and why you needed them","What their competing priorities were — show you understood their side","How you made the case: data, impact framed in their terms, making it easy to say yes","What you offered or adjusted to reduce their effort","Result, including whether the relationship stayed intact","Bonus: what you'd do differently to get there faster next time"]},
+    {q:"Tell me about a time you improved a process or a tool.",lvl:"behavioral",pts:["This is the role's core story — have a strong one ready","What was broken and how you noticed or measured it","What you changed and why that approach over alternatives","Who you had to bring along and how","Quantified result: time saved, noise reduced, coverage increased","What you did to make the improvement stick after you moved on"]},
+    {q:"Tell me about a time you failed or made a mistake.",lvl:"behavioral",pts:["Pick a real mistake with real consequence — a trivial one reads as evasion","Own it plainly without over-apologizing or blaming circumstances","Focus on what you did once you realized: how fast you raised it, how you fixed it","State the specific lesson and the change you made","Show the change held — you didn't repeat it"]},
+    {q:"Why this role, and why Humana?",lvl:"behavioral",pts:["Be specific about the tool operations angle — it's a distinctive role and saying so proves you read the posting","Connect to something real you've done with security tooling or automation","Mention the breadth: ten platforms, three clouds, AI security emerging","Healthcare context: the work protects member data, and regulated environments raise the bar","Have a genuine reason, not a generic one — keep it under 90 seconds"]},
+    {q:"Where are the gaps in your experience for this role?",lvl:"behavioral",pts:["Answer honestly — everyone has gaps and evasion is transparent","Pick a real one that isn't core to the first six months","Show self-awareness about why it's a gap","State what you're actively doing about it with specifics","Close on a strength that offsets it without dodging the question"]},
+    {q:"Do you have any questions for us?",lvl:"behavioral",pts:["Always have four ready — no questions reads as no interest","Which platform is causing the most operational pain right now","What does success look like at 90 days and at a year","How is the AI security work scoped, and where is it heading","How does the team split ownership across so many platforms","Avoid anything answered in the job posting"]}
+  ]
+}
+];
+
+const BEHAVIORAL_EXTRA = [
+  {q:"Walk me through your background and why you're interested in this role.",lvl:"behavioral",pts:["Two minutes maximum: where you started, what you've done, why here","Emphasize security tooling, automation, cloud, and any client-facing work","End on why this specific team, not why any security job","This one should be nearly memorized — it sets the tone for everything after"]},
+  {q:"Tell me about a time you had to learn something quickly.",lvl:"behavioral",pts:["A real deadline or stake","How you approached it — docs, labs, asking people","Judgment about what you needed now vs what could wait","What you delivered and how fast","Tie it to this role, where ten platforms means constant ramp-up"]},
+  {q:"How do you prioritize when everything is urgent?",lvl:"behavioral",pts:["Have an actual framework: impact, exposure, effort, deadline","Show you communicate trade-offs rather than silently dropping things","Confirm priority with a stakeholder rather than guessing","Give a concrete example where you chose and it worked"]},
+  {q:"How do you keep up with security as a field?",lvl:"behavioral",pts:["The posting lists continuous learning as a required qualification — treat this as scored","Name specific real sources you actually use","Mention hands-on practice, not just reading","Have an opinion on something recent, ideally in AI security","Show a sustainable habit rather than a heroic claim"]}
+];
+
+/* ============================================================
+   TOOL DIRECTORY — the platforms named in the posting
+   ============================================================ */
+const TOOLS = [
+{g:"SaaS & AI Posture", items:[
+  {n:"AppOmni", cat:"SSPM", d:"SaaS Security Posture Management. Monitors configuration, access, external sharing, and OAuth grants across SaaS platforms like Salesforce, M365, and ServiceNow.",
+   why:"The posting gives AppOmni its own duty bullet including SaaS posture visibility, AI application discovery, reporting, and platform expansion.",
+   say:"SSPM — it finds misconfiguration and risky access in SaaS apps the way CSPM does for cloud infrastructure. It's also a discovery path for shadow AI applications."},
+  {n:"GCP Model Armor", cat:"AI runtime security", d:"Google Cloud service that screens prompts and model responses at runtime for prompt injection, jailbreaks, sensitive data, malicious URLs, and harmful content.",
+   why:"Named as a platform to help operationalize, and AI security controls appear again in the experience list. The newest capability in the portfolio.",
+   say:"A guardrail at the model boundary — conceptually a WAF for AI applications, screening what goes into the model and what comes back."}
+]},
+{g:"Cloud Security (CNAPP)", items:[
+  {n:"Wiz", cat:"Agentless CNAPP", d:"Cloud posture, entitlements, vulnerabilities, and container security via snapshots and cloud APIs. Known for graph-based attack path analysis.",
+   why:"A primary platform. Expect questions about triage volume and prioritizing by attack path rather than raw severity.",
+   say:"Agentless CNAPP. Its differentiator is the security graph — chaining exposure, vulnerability, permissions, and data into an actual attack path."},
+  {n:"Prisma Cloud", cat:"CNAPP (Palo Alto)", d:"Cloud posture plus agent-based Defenders for runtime protection, container controls, and compliance reporting across multi-cloud.",
+   why:"Runs alongside Wiz. Be ready for the 'why both' question — the answer is usually agentless breadth plus agent-based runtime depth.",
+   say:"Palo Alto's CNAPP. Broader than agentless-only because Defenders give runtime protection and container enforcement."}
+]},
+{g:"Code, Secrets & Artifacts", items:[
+  {n:"Cycode", cat:"ASPM / secrets", d:"Application security posture management with strong secrets detection and pipeline integrity. Covers code, CI/CD, and supply chain.",
+   why:"Has its own duty bullet: secrets detection, remediation tracking, root-cause analysis, preventive controls, and reporting.",
+   say:"ASPM, strongest on secrets detection across code and pipelines. Key point: the fix for a leaked secret is rotation, not deleting the commit."},
+  {n:"Checkmarx", cat:"SAST", d:"Static application security testing — analyzes source code for vulnerable patterns without executing it.",
+   why:"Named as a platform to operationalize. SAST tuning and false positive management is a predictable interview topic.",
+   say:"SAST. Runs early on source, catches injection and unsafe patterns, and needs tuning because it lacks runtime context."},
+  {n:"JFrog / Xray", cat:"Artifact & SCA", d:"Artifact repository with dependency and container scanning — CVEs and license risk on the components in your builds.",
+   why:"Named platform. Sits where dependencies and container images enter the pipeline.",
+   say:"Artifact repository plus scanning. Xray finds vulnerable dependencies and license issues in what's stored in Artifactory."}
+]},
+{g:"Application Testing", items:[
+  {n:"HCL AppScan", cat:"DAST", d:"Dynamic application security testing — probes running applications for exploitable weaknesses.",
+   why:"Named platform. The operational challenge is authenticated scan configuration and scheduling against real environments.",
+   say:"DAST. Tests the running app from outside, so fewer false positives, but it needs a deployed environment and credentials to test past login."},
+  {n:"Burp Suite", cat:"Web app testing", d:"Interactive proxy for manual and automated web application security testing — the standard tool for hands-on app testing.",
+   why:"Named in the experience list. More manual and investigative than the automated scanners.",
+   say:"The hands-on web app testing tool. Proxy the traffic, manipulate requests, and validate whether a scanner finding is actually exploitable."},
+  {n:"NowSecure", cat:"Mobile security", d:"Mobile application security testing for iOS and Android — insecure storage, weak transport, hardcoded secrets, and tampering exposure.",
+   why:"Named in the experience list. Mobile is a distinct surface with its own risks.",
+   say:"Mobile AppSec. Different risk set from web: data at rest on the device, secrets in the binary, and transport security."}
+]},
+{g:"Integration Targets", items:[
+  {n:"Splunk", cat:"SIEM / analytics", d:"Log aggregation, search, correlation, alerting, and dashboards. The reporting layer for findings and tool health.",
+   why:"Named integration target. Also where dashboards and metrics for leadership are likely built.",
+   say:"The aggregation and reporting layer. Send findings and tool health events, correlate across tools, and build the dashboards leadership reads."},
+  {n:"ServiceNow", cat:"ITSM", d:"Ticketing, workflow, CMDB, and change management. Where findings become assigned work with an SLA and an audit trail.",
+   why:"Named integration target. Also the system of record for change management in a regulated environment.",
+   say:"The work layer. Findings become tickets with an owner and an SLA. The hard parts are deduplication and bidirectional status sync."},
+  {n:"Azure DevOps", cat:"CI/CD & work tracking", d:"Pipelines, repos, and boards. Security scans run as pipeline tasks; findings can become work items.",
+   why:"Named integration target. Where scanning gates live for teams building on Azure.",
+   say:"Pipelines plus work tracking. Scans run as tasks with vault-backed variable groups, and results surface in the pull request."},
+  {n:"GitHub", cat:"Source & CI/CD", d:"Repositories and GitHub Actions. Native secret scanning, push protection, Dependabot, and code scanning integrations.",
+   why:"Named integration target. Where developer-facing security controls land.",
+   say:"Source and Actions. Push protection stops secrets server-side, and scanners surface results directly in the PR where developers already are."},
+  {n:"Microsoft 365", cat:"SaaS platform", d:"Email, Teams, SharePoint, OneDrive. Both a posture target for SSPM and a notification channel.",
+   why:"Named integration target. Also one of the highest-value SaaS platforms for AppOmni to cover.",
+   say:"Both a target and a channel — AppOmni monitors its posture, and Teams is where alerts and digests get delivered."}
+]}
+];
+/* ============================================================
+   STATE
+   ============================================================ */
+const MEM = {};
+const store = {
+  read(){
+    try{ const r = localStorage.getItem("secprep.v1"); if(r) return JSON.parse(r); }catch(e){}
+    return MEM.data || null;
+  },
+  write(o){
+    MEM.data = o;
+    try{ localStorage.setItem("secprep.v1", JSON.stringify(o)); }catch(e){}
+  },
+  clear(){ MEM.data = null; try{ localStorage.removeItem("secprep.v1"); }catch(e){} }
+};
+const blank = () => ({read:{}, study:{}, iq:{}, cards:{}, plan:{}, theme:"light"});
+let S = Object.assign(blank(), store.read() || {});
+const save = () => store.write(S);
+
+const T = id => TOPICS.find(t=>t.id===id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* readiness maths */
+function topicScore(t){
+  const sq = t.study.length, iqn = t.iq.length;
+  const sDone = t.study.filter((_,i)=>S.study[t.id+":"+i]!=null).length;
+  const sGood = t.study.filter((_,i)=>(S.study[t.id+":"+i]||0)>=2).length;
+  const iDone = t.iq.filter((_,i)=>S.iq[t.id+":"+i]!=null).length;
+  const iGood = t.iq.filter((_,i)=>(S.iq[t.id+":"+i]||0)>=2).length;
+  const readPart = S.read[t.id] ? 25 : 0;
+  const studyPart = sq ? 40*(sGood/sq) : 40;
+  const iqPart = iqn ? 35*(iGood/iqn) : 35;
+  return {
+    pct: Math.round(readPart+studyPart+iqPart),
+    sDone, sq, iDone, iqn, sGood, iGood,
+    touched: !!S.read[t.id] || sDone>0 || iDone>0
+  };
+}
+function readiness(){
+  let wsum=0, w=0;
+  TOPICS.forEach(t=>{ const wt = t.pri; wsum += topicScore(t).pct*wt; w += wt; });
+  return Math.round(wsum/w);
+}
+const BANDS = [
+  {min:0,  label:"Not started",     v:"--crit"},
+  {min:1,  label:"Critical gaps",   v:"--crit"},
+  {min:25, label:"Major gaps",      v:"--high"},
+  {min:45, label:"Coming together", v:"--med"},
+  {min:65, label:"Solid coverage",  v:"--low"},
+  {min:85, label:"Interview-ready", v:"--brand"}
+];
+const band = p => BANDS.filter(b=>p>=b.min).pop();
+
+/* ============================================================
+   POSTURE HEADER (signature element)
+   ============================================================ */
+function renderPosture(){
+  const p = readiness(), b = band(p), C = 2*Math.PI*23;
+  const done = TOPICS.filter(t=>topicScore(t).pct>=80).length;
+  const q = Object.keys(S.study).length + Object.keys(S.iq).length;
+  const weak = TOPICS.filter(t=>t.pri===5 && topicScore(t).pct<60).length;
+  document.getElementById("posture").innerHTML = `
+    <div class="ring" style="--score:var(${b.v})">
+      <svg width="52" height="52"><circle class="track" cx="26" cy="26" r="23"></circle>
+      <circle class="fill" cx="26" cy="26" r="23" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p/100)}"></circle></svg>
+      <b>${p}</b>
+    </div>
+    <div class="posture-meta" style="--score:var(${b.v})">
+      <div class="lbl">Readiness posture</div>
+      <div class="val">${b.label}</div>
+    </div>
+    <div class="posture-stats">
+      <div class="pstat"><div class="n">${done}<span style="color:var(--muted)">/${TOPICS.length}</span></div><div class="t">Topics solid</div></div>
+      <div class="pstat"><div class="n">${q}</div><div class="t">Questions rated</div></div>
+      <div class="pstat"><div class="n" style="color:${weak?"var(--crit)":"var(--low)"}">${weak}</div><div class="t">Top-priority gaps</div></div>
+    </div>`;
+}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+const V = {};
+
+V.overview = () => {
+  const p = readiness();
+  const next = TOPICS.filter(t=>topicScore(t).pct<80).sort((a,b)=>b.pri-a.pri||a.n-b.n)[0];
+  const brief = `<div class="card" style="padding:18px 20px;margin-top:22px">
+    <div class="mini-h" style="margin-top:0">What this role actually is</div>
+    <p style="margin:0 0 14px;font-size:14.5px;color:var(--ink-2);line-height:1.6">${esc(ROLE.thesis)}</p>
+    <div class="termgrid">${ROLE.signals.map(s=>`<div class="term"><b>${esc(s.k)}</b><span>${esc(s.v)}</span></div>`).join("")}</div>
+  </div>`;
+  const cards = TOPICS.map(t=>{
+    const s = topicScore(t);
+    return `<button class="card topic-card" data-goto="${t.id}">
+      <div class="tc-top">
+        <div><div class="tc-num">${String(t.n).padStart(2,"0")}</div><div class="tc-title">${esc(t.title)}</div></div>
+        <span class="pri pri-${t.pri}">${t.pri===5?"MUST KNOW":t.pri===4?"IMPORTANT":"USEFUL"}</span>
+      </div>
+      <div class="tc-blurb">${esc(t.blurb)}</div>
+      <div class="meter"><i style="width:${s.pct}%"></i></div>
+      <div class="tc-foot"><span>${s.pct}% covered</span><span>${s.sq+s.iqn} questions</span></div>
+    </button>`;
+  }).join("");
+  return `
+  <div class="eyebrow">${esc(ROLE.org)}</div>
+  <h1 class="h-page">${esc(ROLE.title)}</h1>
+  <p class="sub">Everything below is built against the actual posting. ${TOPICS.length} topics, weighted by how
+  heavily each one appears in the job description — the posture score tracks where you stand across all of it.</p>
+  <div class="btnrow" style="margin-top:20px">
+    ${next?`<button class="btn" data-drill="${next.id}">${p===0?"Start with":"Pick up at"} ${esc(next.title)} →</button>`:`<button class="btn" data-view-go="interview">Run a mock interview →</button>`}
+    <button class="btn ghost" data-view-go="tools">Tool directory</button>
+    <button class="btn ghost" data-view-go="plan">3-week plan</button>
+  </div>
+  ${brief}
+  <div class="divider"></div>
+  <div class="mini-h" style="margin-top:0">All topics</div>
+  <div class="grid grid-3">${cards}</div>`;
+};
+
+V.library = () => `
+  <div class="eyebrow">Reference</div>
+  <h1 class="h-page">Topic library</h1>
+  <p class="sub">The full guide, expanded. Open a topic, read it, then mark it read — that counts toward your posture score.
+  Everything here is also what the study and interview questions are drawn from.</p>
+  <div style="margin-top:22px">${TOPICS.map(t=>{
+    const s = topicScore(t);
+    return `<details class="acc" id="acc-${t.id}">
+      <summary class="acc-head">
+        <span class="idx">${String(t.n).padStart(2,"0")}</span>
+        <span class="nm">${esc(t.title)}</span>
+        <span class="pri pri-${t.pri}">${"★".repeat(t.pri)}</span>
+        <span class="chev">›</span>
+      </summary>
+      <div class="acc-body">
+        <p class="lede">${esc(t.lede)}</p>
+        <div class="onjob"><b>What this looks like on the team</b>${esc(t.onjob)}</div>
+        <div class="mini-h">Key points</div>
+        <ul class="pts">${t.points.map(x=>`<li>${x}</li>`).join("")}</ul>
+        <div class="mini-h">Terms to know</div>
+        <div class="termgrid">${t.terms.map(x=>`<div class="term"><b>${esc(x.t)}</b><span>${esc(x.d)}</span></div>`).join("")}</div>
+        <div class="btnrow" style="margin-top:20px">
+          <button class="btn sm ${S.read[t.id]?"ghost":""}" data-read="${t.id}">${S.read[t.id]?"✓ Marked as read":"Mark as read"}</button>
+          <button class="btn sm ghost" data-drill="${t.id}">Study this topic (${s.sq} questions)</button>
+          <button class="btn sm ghost" data-practice="${t.id}">Practice interview questions (${s.iqn})</button>
+        </div>
+      </div>
+    </details>`;
+  }).join("")}</div>`;
+
+/* ---------- guided study drill ---------- */
+let drill = null;
+V.drill = () => {
+  if(!drill) return `
+    <div class="eyebrow">Guided study</div>
+    <h1 class="h-page">Learn a topic, then prove it</h1>
+    <p class="sub">Each session shows you the concept at a high level, then asks recall questions one at a time.
+    Answer in your head or out loud, reveal, and rate yourself honestly — the rating is what drives your posture score
+    and what decides which topics resurface later.</p>
+    <div class="grid grid-3" style="margin-top:22px">${TOPICS.map(t=>{
+      const s = topicScore(t);
+      return `<button class="card topic-card" data-drill="${t.id}">
+        <div class="tc-top"><div><div class="tc-num">${String(t.n).padStart(2,"0")}</div><div class="tc-title">${esc(t.title)}</div></div>
+        <span class="pri pri-${t.pri}">${"★".repeat(t.pri)}</span></div>
+        <div class="meter"><i style="width:${s.sq?Math.round(100*s.sGood/s.sq):0}%"></i></div>
+        <div class="tc-foot"><span>${s.sGood}/${s.sq} solid</span><span>${S.read[t.id]?"read ✓":"not read"}</span></div>
+      </button>`;
+    }).join("")}</div>`;
+
+  const t = T(drill.id);
+  if(drill.stage==="intro") return `
+    <div class="eyebrow">Guided study · ${String(t.n).padStart(2,"0")}</div>
+    <h1 class="h-page">${esc(t.title)}</h1>
+    <div class="stage" style="margin-top:20px">
+      <p class="lede" style="margin-top:0;font-size:16px">${esc(t.lede)}</p>
+      <div class="onjob"><b>What this looks like on the team</b>${esc(t.onjob)}</div>
+      <div class="mini-h">The points that matter</div>
+      <ul class="pts">${t.points.map(x=>`<li>${x}</li>`).join("")}</ul>
+      <div class="btnrow" style="margin-top:24px">
+        <button class="btn" data-drill-start="1">Start ${t.study.length} recall questions →</button>
+        <button class="btn ghost" data-drill-exit="1">Back to topics</button>
+      </div>
+    </div>`;
+
+  if(drill.stage==="done"){
+    const s = topicScore(t);
+    const nx = TOPICS.filter(x=>topicScore(x).pct<80 && x.id!==t.id).sort((a,b)=>b.pri-a.pri)[0];
+    return `
+    <div class="eyebrow">Guided study</div>
+    <h1 class="h-page">${esc(t.title)} — session complete</h1>
+    <div class="stage" style="margin-top:20px">
+      <div class="mini-h" style="margin-top:0">Result</div>
+      <p style="font-size:17px;margin:0">You rated <b>${drill.good}</b> of ${t.study.length} solid.
+      ${drill.good===t.study.length?"That topic is holding up well.":"The ones you flagged will be the first thing worth revisiting."}</p>
+      <div class="meter" style="margin-top:18px"><i style="width:${s.pct}%"></i></div>
+      <div class="tc-foot" style="margin-top:7px"><span>Topic coverage ${s.pct}%</span><span>${t.iq.length} interview questions still available</span></div>
+      <div class="btnrow" style="margin-top:24px">
+        <button class="btn" data-practice="${t.id}">Practice the interview questions →</button>
+        ${nx?`<button class="btn ghost" data-drill="${nx.id}">Next topic: ${esc(nx.title)}</button>`:""}
+        <button class="btn ghost" data-drill-exit="1">Back to topics</button>
+      </div>
+    </div>`;
+  }
+
+  const i = drill.i, item = t.study[i];
+  return `
+  <div class="eyebrow">Guided study · ${esc(t.title)}</div>
+  <div class="progline"><i style="width:${Math.round(100*i/t.study.length)}%"></i></div>
+  <div class="stage">
+    <div class="stage-top">
+      <span class="qcount">Recall ${i+1} of ${t.study.length}</span>
+      <button class="btn ghost sm" data-drill-exit="1">End session</button>
+    </div>
+    <p class="qtext">${esc(item.q)}</p>
+    ${!drill.shown ? `<div class="btnrow" style="margin-top:26px"><button class="btn" data-drill-show="1">Show answer</button></div>`
+    : `<div class="answer">
+        <div class="mini-h">Answer</div>
+        <p style="margin:0;font-size:15.5px;color:var(--ink-2)">${esc(item.a)}</p>
+        <div class="mini-h" style="margin-top:20px">How did that go?</div>
+        <div class="selfrate">
+          <button class="rate" data-rate="0">Didn't know it</button>
+          <button class="rate" data-rate="1">Roughly there</button>
+          <button class="rate" data-rate="2">Solid</button>
+        </div>
+      </div>`}
+  </div>`;
+};
+
+/* ---------- interview practice ---------- */
+let sess = null;
+let pick = { topics:new Set(), count:8, behavioral:true };
+V.interview = () => {
+  if(!sess){
+    return `
+    <div class="eyebrow">Rehearse</div>
+    <h1 class="h-page">Interview practice</h1>
+    <p class="sub">Answer out loud, in full sentences, before you reveal anything — reading the answer points first
+    feels productive and teaches you nothing. Each question shows what a strong answer covers, not a script to memorize.</p>
+    <div class="card" style="padding:20px;margin-top:22px">
+      <div class="mini-h" style="margin-top:0">Topics <span style="text-transform:none;letter-spacing:0;color:var(--muted)">— leave all off for a full mix</span></div>
+      <div class="chiprow">${TOPICS.map(t=>`<button class="chip" data-pick="${t.id}" aria-pressed="${pick.topics.has(t.id)}">${esc(t.title)}</button>`).join("")}</div>
+      <div class="mini-h">Session length</div>
+      <div class="chiprow">${[5,8,12,20].map(n=>`<button class="chip" data-count="${n}" aria-pressed="${pick.count===n}">${n} questions</button>`).join("")}
+        <button class="chip" data-count="0" aria-pressed="${pick.count===0}">Everything</button></div>
+      <div class="mini-h">Behavioral questions</div>
+      <div class="chiprow"><button class="chip" data-beh="1" aria-pressed="${pick.behavioral}">${pick.behavioral?"Included":"Excluded"}</button></div>
+      <div class="btnrow" style="margin-top:22px">
+        <button class="btn" data-sess="custom">Start session →</button>
+        <button class="btn ghost" data-sess="mock">Full mock interview (10 mixed)</button>
+      </div>
+      <p class="note">Mock interview weights toward the five-star topics and always ends with behavioral questions, the way a real screen usually runs.</p>
+    </div>`;
+  }
+  if(sess.stage==="done"){
+    const solid = sess.rated.filter(r=>r===2).length, shaky = sess.rated.filter(r=>r===0).length;
+    const weak = sess.weak.slice(0,4);
+    return `
+    <div class="eyebrow">Rehearse</div>
+    <h1 class="h-page">Session complete</h1>
+    <div class="stage" style="margin-top:20px">
+      <div class="grid grid-3">
+        <div><div class="pstat"><div class="n" style="font-size:26px;color:var(--low)">${solid}</div><div class="t">Solid</div></div></div>
+        <div><div class="pstat"><div class="n" style="font-size:26px;color:var(--med)">${sess.rated.filter(r=>r===1).length}</div><div class="t">Roughly there</div></div></div>
+        <div><div class="pstat"><div class="n" style="font-size:26px;color:var(--crit)">${shaky}</div><div class="t">Shaky</div></div></div>
+      </div>
+      ${weak.length?`<div class="mini-h">Worth another pass</div>
+      <ul class="pts">${weak.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:`<p class="lede">Nothing flagged as shaky. Try a longer session or a topic you've been avoiding.</p>`}
+      <div class="btnrow" style="margin-top:24px">
+        <button class="btn" data-sess-exit="1">Set up another session</button>
+        <button class="btn ghost" data-view-go="overview">Back to overview</button>
+      </div>
+    </div>`;
+  }
+  const q = sess.qs[sess.i];
+  const lvlName = {core:"Core",deep:"Deep dive",scenario:"Scenario",behavioral:"Behavioral"}[q.lvl]||"Core";
+  return `
+  <div class="eyebrow">Interview practice${sess.mock?" · mock interview":""}</div>
+  <div class="progline"><i style="width:${Math.round(100*sess.i/sess.qs.length)}%"></i></div>
+  <div class="stage">
+    <div class="stage-top">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="qcount">Question ${sess.i+1} of ${sess.qs.length}</span>
+        <span class="tag ${q.lvl}">${lvlName}</span>
+        ${q.topic?`<span class="tag">${esc(q.topic)}</span>`:""}
+      </div>
+      <button class="btn ghost sm" data-sess-exit="1">End session</button>
+    </div>
+    <p class="qtext">${esc(q.q)}</p>
+    ${!sess.shown?`<div class="btnrow" style="margin-top:26px">
+        <button class="btn" data-sess-show="1">Reveal what a strong answer covers</button>
+      </div><p class="note">Say your answer out loud first. Aim for 60–90 seconds.</p>`
+    :`<div class="answer">
+        <div class="mini-h">A strong answer touches on</div>
+        <ul class="pts">${q.pts.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+        <div class="mini-h" style="margin-top:20px">How did that go?</div>
+        <div class="selfrate">
+          <button class="rate" data-srate="0">Shaky</button>
+          <button class="rate" data-srate="1">Got the gist</button>
+          <button class="rate" data-srate="2">Solid</button>
+        </div>
+      </div>`}
+  </div>`;
+};
+
+/* ---------- flashcards ---------- */
+let deck = null;
+V.cards = () => {
+  if(!deck){
+    const total = TOPICS.reduce((a,t)=>a+t.terms.length,0);
+    const known = Object.values(S.cards).filter(Boolean).length;
+    return `
+    <div class="eyebrow">Rehearse</div>
+    <h1 class="h-page">Flashcards</h1>
+    <p class="sub">${total} terms pulled from every topic. The fastest way to stop the vocabulary being the thing that
+    slows you down — you can't reason about CIEM in an interview while also trying to remember what it stands for.</p>
+    <div class="card" style="padding:20px;margin-top:22px">
+      <div class="mini-h" style="margin-top:0">Deck</div>
+      <div class="chiprow">
+        <button class="chip" data-deck="all" aria-pressed="true">All ${total} terms</button>
+        <button class="chip" data-deck="unknown">Only the ${total-known} not yet marked known</button>
+        <button class="chip" data-deck="p5">Five-star topics only</button>
+      </div>
+      <p class="note">Progress: ${known} of ${total} marked known.</p>
+    </div>`;
+  }
+  if(deck.i>=deck.list.length) return `
+    <div class="eyebrow">Flashcards</div>
+    <h1 class="h-page">Deck finished</h1>
+    <div class="stage" style="margin-top:20px">
+      <p class="lede" style="margin-top:0">You marked <b>${deck.known}</b> of ${deck.list.length} as known this pass.</p>
+      <div class="btnrow" style="margin-top:22px">
+        <button class="btn" data-deck-exit="1">Choose another deck</button>
+        <button class="btn ghost" data-view-go="acronyms">See all terms as a list</button>
+      </div>
+    </div>`;
+  const c = deck.list[deck.i];
+  return `
+  <div class="eyebrow">Flashcards · ${esc(c.topic)}</div>
+  <div class="progline"><i style="width:${Math.round(100*deck.i/deck.list.length)}%"></i></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <span class="qcount">Card ${deck.i+1} of ${deck.list.length}</span>
+    <button class="btn ghost sm" data-deck-exit="1">End deck</button>
+  </div>
+  <div class="flip ${deck.flipped?"on":""}" id="flip">
+    <div class="flip-in">
+      <div class="face"><span class="lbl">Term</span><span class="t">${esc(c.t)}</span><span class="lbl" style="margin-top:12px">tap to flip</span></div>
+      <div class="face back"><span class="lbl">${esc(c.t)}</span><span class="d">${esc(c.d)}</span></div>
+    </div>
+  </div>
+  <div class="btnrow" style="justify-content:center;margin-top:22px">
+    <button class="btn ghost" data-card="0">Review again</button>
+    <button class="btn" data-card="1">I know this</button>
+  </div>`;
+};
+
+/* ---------- tool directory ---------- */
+V.tools = () => `
+  <div class="eyebrow">Reference</div>
+  <h1 class="h-page">Tool directory</h1>
+  <p class="sub">Every platform named in the posting, grouped by what it does. The "if asked, say" line is the
+  one-sentence answer to give when a tool comes up — knowing the category cold matters more than having used it.
+  This is the page to review the morning of the interview.</p>
+  ${TOOLS.map(g=>`
+    <div class="mini-h">${esc(g.g)}</div>
+    <div class="grid grid-2">${g.items.map(t=>`
+      <div class="card" style="padding:15px 17px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px">
+          <span class="tc-title">${esc(t.n)}</span>
+          <span class="tag">${esc(t.cat)}</span>
+        </div>
+        <p style="margin:0 0 10px;font-size:13.4px;color:var(--ink-2);line-height:1.5">${esc(t.d)}</p>
+        <p style="margin:0 0 10px;font-size:12.8px;color:var(--muted);line-height:1.5"><b style="color:var(--ink-2)">Why it is in the posting: </b>${esc(t.why)}</p>
+        <div class="onjob" style="margin:0"><b>If asked, say</b>${esc(t.say)}</div>
+      </div>`).join("")}</div>`).join("")}
+  <p class="note">${TOOLS.reduce((a,g)=>a+g.items.length,0)} platforms. Do not claim hands-on experience with any of these you have not used \u2014 name the category and say how you would ramp instead.</p>`;
+
+/* ---------- acronym decoder ---------- */
+let filter = "";
+V.acronyms = () => {
+  const rows = [];
+  TOPICS.forEach(t=>t.terms.forEach(x=>rows.push({...x,topic:t.title,id:t.id})));
+  const f = filter.toLowerCase();
+  const shown = rows.filter(r=>!f || r.t.toLowerCase().includes(f) || r.d.toLowerCase().includes(f) || r.topic.toLowerCase().includes(f));
+  return `
+  <div class="eyebrow">Reference</div>
+  <h1 class="h-page">Acronym decoder</h1>
+  <p class="sub">Every term from every topic in one searchable list. This field runs on acronyms and most of them
+  sound alike — this is the page to keep open during a call.</p>
+  <div style="margin:20px 0 14px"><input class="search" id="q" placeholder="Search terms, definitions or topics…" value="${esc(filter)}"></div>
+  <div class="card" style="overflow:hidden">
+    <table class="tbl"><thead><tr><th style="width:22%">Term</th><th>Meaning</th><th style="width:22%">Topic</th></tr></thead>
+    <tbody>${shown.length?shown.map(r=>`<tr><td><code>${esc(r.t)}</code></td><td>${esc(r.d)}</td><td style="color:var(--muted)">${esc(r.topic)}</td></tr>`).join(""):
+      `<tr><td colspan="3" class="empty">No term matches that. Try a shorter search.</td></tr>`}</tbody></table>
+  </div>
+  <p class="note">${shown.length} of ${rows.length} terms shown.</p>`;
+};
+
+/* ---------- 4 week plan ---------- */
+const PLAN = [
+  {w:"Week 1", h:"Know the portfolio", why:"You cannot discuss a tool operations role without fluency in the tools it operates.",
+   tasks:["Read Security Tool Operations and The Named Platforms end to end","Drill the Tool directory until you can name every platform's category without pausing","Read Integrations and work out how findings would flow from each tool into ServiceNow","Read CNAPP and Cloud Fundamentals, paying attention to the GCP column","Flashcards: platform names and integration terms","Write one sentence per tool in your own words \u2014 if you cannot, reread that card"]},
+  {w:"Week 2", h:"The differentiators", why:"AI security and regulated-environment fluency are where most candidates will have nothing to say.",
+   tasks:["Read AI Security & Model Armor twice \u2014 this is the biggest opportunity on the list","Look up the OWASP Top 10 for LLM Applications and be able to name four items","Read Regulated Enterprise and learn what PHI changes about severity and urgency","Read Secrets & SaaS Posture, including why rotation is the fix for a leaked secret","Read Metrics & Reporting and sketch the leadership dashboard you would build","Practice the AI security and compliance interview questions out loud"]},
+  {w:"Week 3", h:"Rehearsal", why:"Knowing it and saying it under pressure are different skills.",
+   tasks:["Read the remaining topics: AppSec scanning, CI/CD, vuln management, automation, vendor management","Write five STAR stories in full, then cut each to 90 seconds","Make sure one story is about improving a tool or process \u2014 that is this role's core narrative","Run a full mock interview in this app and rate yourself honestly","Redo every question you rated shaky","Prepare your four questions for them, including one about the AI security roadmap","Final pass over the Tool directory the morning of"]}
+];
+V.plan = () => {
+  const total = PLAN.reduce((a,w)=>a+w.tasks.length,0);
+  const done = Object.values(S.plan).filter(Boolean).length;
+  return `
+  <div class="eyebrow">Prepare</div>
+  <h1 class="h-page">Three weeks, start to interview</h1>
+  <p class="sub">Ordered by what the posting weights most heavily. Week 1 is the tool portfolio because that is the
+  role. Week 2 is AI security and regulated-environment context, where most candidates will have nothing prepared.
+  If you have less time, do week 1 and week 3 properly and skim week 2.</p>
+  <div class="progline" style="margin:20px 0 6px"><i style="width:${Math.round(100*done/total)}%"></i></div>
+  <p class="note" style="margin:0 0 20px">${done} of ${total} tasks done</p>
+  <div class="grid grid-2">${PLAN.map((w,wi)=>`
+    <div class="card week">
+      <div class="wlbl">${w.w}</div>
+      <h4>${esc(w.h)}</h4>
+      <p class="note" style="margin:0 0 10px">${esc(w.why)}</p>
+      ${w.tasks.map((t,ti)=>{
+        const k = wi+":"+ti, on = !!S.plan[k];
+        return `<label class="task ${on?"done":""}"><input type="checkbox" data-plan="${k}" ${on?"checked":""}><span>${esc(t)}</span></label>`;
+      }).join("")}
+    </div>`).join("")}</div>`;
+};
+
+/* ============================================================
+   ROUTER + EVENTS
+   ============================================================ */
+let view = "overview";
+function render(){
+  document.querySelectorAll(".navbtn").forEach(b=>b.setAttribute("aria-current", b.dataset.view===view));
+  document.getElementById("view").innerHTML = V[view]();
+  renderPosture();
+  const q = document.getElementById("q");
+  if(q){ q.addEventListener("input", e=>{ filter=e.target.value; const p=e.target.selectionStart;
+    render(); const n=document.getElementById("q"); n.focus(); n.setSelectionRange(p,p); }); }
+  const fl = document.getElementById("flip");
+  if(fl) fl.addEventListener("click", ()=>{ deck.flipped=!deck.flipped; render(); });
+}
+function go(v){
+  // a finished session shouldn't greet you again when you come back to the tab
+  if(v!=="drill" && drill && drill.stage==="done") drill=null;
+  if(v!=="interview" && sess && sess.stage==="done") sess=null;
+  if(v!=="cards" && deck && deck.i>=deck.list.length) deck=null;
+  view=v; window.scrollTo({top:0,behavior:"instant"}); render();
+}
+
+function startDrill(id){ drill={id, stage:"intro", i:0, shown:false, good:0}; go("drill"); }
+function startPractice(ids, count, beh, mock){
+  let pool=[];
+  const list = ids && ids.length ? ids : TOPICS.map(t=>t.id);
+  list.forEach(id=>{ const t=T(id); t.iq.forEach((q,i)=>pool.push({...q, topic:t.title, key:id+":"+i})); });
+  if(mock){
+    const five = pool.filter(q=>TOPICS.find(t=>t.title===q.topic).pri===5 && q.lvl!=="behavioral");
+    const rest = pool.filter(q=>!five.includes(q) && q.lvl!=="behavioral");
+    pool = shuffle(five).slice(0,5).concat(shuffle(rest).slice(0,2));
+    pool = pool.concat(shuffle(BEHAVIORAL_EXTRA.concat(T("traits").iq.map((q,i)=>({...q,topic:"Behavioral",key:"traits:"+i})))).slice(0,3));
+  } else {
+    if(!beh) pool = pool.filter(q=>q.lvl!=="behavioral");
+    pool = shuffle(pool);
+    if(count>0) pool = pool.slice(0,count);
+  }
+  sess={qs:pool, i:0, shown:false, rated:[], weak:[], mock:!!mock, stage:"run"};
+  go("interview");
+}
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function buildDeck(kind){
+  let rows=[];
+  TOPICS.forEach(t=>{ if(kind==="p5"&&t.pri!==5) return; t.terms.forEach((x,i)=>rows.push({...x,topic:t.title,key:t.id+":"+i})); });
+  if(kind==="unknown") rows = rows.filter(r=>!S.cards[r.key]);
+  deck={list:shuffle(rows), i:0, flipped:false, known:0};
+  if(!deck.list.length) deck.list=[{t:"Nothing left",d:"Every card in this deck is already marked known. Pick another deck.",topic:"—",key:"x"}];
+  go("cards");
+}
+
+document.addEventListener("click", e=>{
+  const el = e.target.closest("[data-view],[data-view-go],[data-goto],[data-read],[data-drill],[data-drill-start],[data-drill-show],[data-drill-exit],[data-rate],[data-pick],[data-count],[data-beh],[data-sess],[data-sess-show],[data-sess-exit],[data-srate],[data-practice],[data-deck],[data-deck-exit],[data-card]");
+  if(!el) return;
+  const d = el.dataset;
+
+  if(d.view){ go(d.view); return; }
+  if(d.viewGo){ go(d.viewGo); return; }
+  if(d.goto){ go("library"); setTimeout(()=>{ const a=document.getElementById("acc-"+d.goto); if(a){a.open=true; a.scrollIntoView({behavior:"smooth",block:"start"});} },60); return; }
+  if(d.read){ S.read[d.read]=!S.read[d.read]; save(); render(); return; }
+
+  if(d.drill){ startDrill(d.drill); return; }
+  if(d.drillStart){ drill.stage="run"; drill.i=0; drill.shown=false; drill.good=0; S.read[drill.id]=true; save(); render(); return; }
+  if(d.drillShow){ drill.shown=true; render(); return; }
+  if(d.drillExit){ drill=null; render(); return; }
+  if(d.rate!=null && drill){
+    const v=+d.rate, t=T(drill.id);
+    S.study[drill.id+":"+drill.i]=v; if(v===2) drill.good++;
+    save();
+    drill.i++; drill.shown=false;
+    if(drill.i>=t.study.length) drill.stage="done";
+    render(); return;
+  }
+
+  if(d.pick){ pick.topics.has(d.pick)?pick.topics.delete(d.pick):pick.topics.add(d.pick); render(); return; }
+  if(d.count!=null){ pick.count=+d.count; render(); return; }
+  if(d.beh){ pick.behavioral=!pick.behavioral; render(); return; }
+  if(d.sess){ d.sess==="mock"?startPractice(null,0,true,true):startPractice([...pick.topics], pick.count, pick.behavioral, false); return; }
+  if(d.practice){ startPractice([d.practice],0,true,false); return; }
+  if(d.sessShow){ sess.shown=true; render(); return; }
+  if(d.sessExit){ sess=null; render(); return; }
+  if(d.srate!=null && sess){
+    const v=+d.srate, q=sess.qs[sess.i];
+    sess.rated.push(v); if(v<2) sess.weak.push(q.q);
+    if(q.key) S.iq[q.key]=v;
+    save();
+    sess.i++; sess.shown=false;
+    if(sess.i>=sess.qs.length) sess.stage="done";
+    render(); return;
+  }
+
+  if(d.deck){ buildDeck(d.deck); return; }
+  if(d.deckExit){ deck=null; render(); return; }
+  if(d.card!=null){
+    const c=deck.list[deck.i];
+    if(d.card==="1"){ S.cards[c.key]=true; deck.known++; save(); }
+    deck.i++; deck.flipped=false; render(); return;
+  }
+});
+
+document.addEventListener("change", e=>{
+  if(e.target.dataset.plan!=null){ S.plan[e.target.dataset.plan]=e.target.checked; save(); render(); }
+});
+
+document.addEventListener("keydown", e=>{
+  if(e.target.tagName==="INPUT") return;
+  if(view==="drill" && drill && drill.stage==="run"){
+    if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!drill.shown){drill.shown=true;render();} }
+    if(drill.shown && ["1","2","3"].includes(e.key)) document.querySelector(`[data-rate="${+e.key-1}"]`)?.click();
+  }
+  if(view==="interview" && sess && sess.stage==="run"){
+    if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!sess.shown){sess.shown=true;render();} }
+    if(sess.shown && ["1","2","3"].includes(e.key)) document.querySelector(`[data-srate="${+e.key-1}"]`)?.click();
+  }
+  if(view==="cards" && deck && deck.i<deck.list.length && (e.key===" "||e.key==="Enter")){ e.preventDefault(); deck.flipped=!deck.flipped; render(); }
+});
+
+/* theme + progress controls */
+function applyTheme(){ document.documentElement.setAttribute("data-theme", S.theme||"light"); }
+document.getElementById("themeBtn").addEventListener("click", ()=>{ S.theme = S.theme==="dark"?"light":"dark"; save(); applyTheme(); });
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(!confirm("Clear all progress? Ratings, read marks, flashcards and plan checkboxes will be reset.")) return;
+  const th=S.theme; store.clear(); S=Object.assign(blank(),{theme:th}); save(); drill=null; sess=null; deck=null; go("overview");
+});
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "secprep-progress.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+
+applyTheme();
+render();
+</script>
+</body>
+</html>
