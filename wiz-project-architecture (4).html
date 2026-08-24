@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiz Project Architecture — Two Trees + Service Catalog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C131B;
+  --panel:#141F2B;
+  --panel-2:#1B2836;
+  --line:#2C3D4E;
+  --line-soft:#22303E;
+  --text:#DCE5ED;
+  --text-dim:#8598A8;
+  --text-faint:#5D7186;
+
+  --policy:#D9A22B;      /* Tree 1 — enforcement */
+  --access:#3FA796;      /* Tree 2 — who sees what */
+  --service:#A874C8;     /* Service Catalog — ownership */
+  --alert:#E0684F;       /* coverage gap */
+
+  --hbi:#E0684F;
+  --mbi:#D9A22B;
+  --lbi:#4E8F6E;
+
+  --gutter:clamp(16px,4vw,44px);
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--text);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  font-size:15px;
+  line-height:1.55;
+  background-image:
+    linear-gradient(var(--line-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+  background-size:56px 56px;
+  background-position:-1px -1px;
+}
+.wrap{max-width:1520px;margin:0 auto;padding:0 var(--gutter) 96px;}
+
+/* ---------- type ---------- */
+.display{
+  font-family:"Archivo",system-ui,sans-serif;
+  font-weight:900;
+  letter-spacing:-0.035em;
+  line-height:0.98;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+}
+
+/* ---------- header ---------- */
+.masthead{
+  padding:56px 0 30px;
+  border-bottom:1px solid var(--line);
+}
+.masthead h1{
+  margin:14px 0 0;
+  font-size:clamp(34px,5.6vw,68px);
+  max-width:19ch;
+}
+.masthead h1 em{font-style:normal;color:var(--text-faint);}
+.deck{
+  margin:20px 0 0;
+  max-width:62ch;
+  color:var(--text-dim);
+  font-size:16px;
+}
+.deck strong{color:var(--text);font-weight:600;}
+.meta{
+  display:flex;flex-wrap:wrap;gap:8px 22px;
+  margin-top:26px;
+}
+.meta span{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-faint);letter-spacing:0.06em;}
+
+/* ---------- signature: the trace ---------- */
+.trace{
+  margin:0 0 8px;
+  padding:38px 0 44px;
+  border-bottom:1px solid var(--line);
+}
+.trace-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:16px;margin-bottom:26px;}
+.trace-head h2{font-family:"Archivo",sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;margin:0;}
+.trace-head p{margin:0;color:var(--text-dim);font-size:14px;max-width:56ch;}
+
+.trace-grid{
+  display:grid;
+  grid-template-columns:minmax(230px,1fr) 46px repeat(3,minmax(0,1.35fr));
+  gap:0;
+  align-items:stretch;
+}
+.asset-card{
+  border:1px solid var(--line);
+  border-left:3px solid var(--text-faint);
+  background:var(--panel);
+  padding:18px 20px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.asset-card .lbl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-faint);}
+.asset-card .nm{font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--text);margin-top:8px;font-weight:500;}
+.asset-card .tag{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--text-dim);margin-top:10px;line-height:1.5;}
+.asset-card .tag b{color:var(--access);font-weight:500;}
+
+.fan{position:relative;}
+.fan svg{position:absolute;inset:0;width:100%;height:100%;}
+
+.lens{
+  border:1px solid var(--line);
+  border-top-width:3px;
+  background:var(--panel);
+  padding:16px 18px 18px;
+  margin-left:-1px;
+}
+.lens.p{border-top-color:var(--policy);}
+.lens.a{border-top-color:var(--access);}
+.lens.s{border-top-color:var(--service);}
+.lens .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;}
+.lens.p .k{color:var(--policy);}
+.lens.a .k{color:var(--access);}
+.lens.s .k{color:var(--service);}
+.lens .v{font-family:"IBM Plex Mono",monospace;font-size:13px;margin-top:9px;word-break:break-word;}
+.lens .d{font-size:13px;color:var(--text-dim);margin-top:10px;line-height:1.5;}
+
+/* ---------- section scaffolding ---------- */
+.sec{padding:52px 0 0;}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;margin-bottom:8px;}
+.sec-head h2{
+  font-family:"Archivo",sans-serif;font-weight:900;letter-spacing:-0.03em;
+  font-size:clamp(24px,3vw,34px);margin:0;
+}
+.sec-note{color:var(--text-dim);font-size:14.5px;max-width:74ch;margin:0 0 26px;}
+
+/* ---------- two trees ---------- */
+.trees{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.tree{border:1px solid var(--line);background:var(--panel);}
+.tree-bar{
+  padding:15px 20px;
+  border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px;
+}
+.tree.t1 .tree-bar{border-top:3px solid var(--policy);}
+.tree.t2 .tree-bar{border-top:3px solid var(--access);}
+.tree-bar h3{font-family:"Archivo",sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em;margin:0;}
+.tree-bar .who{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;}
+.tree.t1 .who{color:var(--policy);}
+.tree.t2 .who{color:var(--access);}
+.tree-sub{padding:0 20px 16px;border-bottom:1px solid var(--line-soft);color:var(--text-dim);font-size:13.5px;}
+.tree-body{padding:16px 20px 22px;}
+
+.node{border-left:1px solid var(--line);margin-left:5px;padding-left:15px;}
+.node.root{border-left:none;margin-left:0;padding-left:0;}
+
+.row{
+  display:flex;align-items:baseline;gap:10px;
+  padding:7px 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.row:last-child{border-bottom:none;}
+.row .name{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--text);}
+.row .scope{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--text-faint);margin-left:auto;text-align:right;}
+.row.f .name{font-weight:600;font-size:13.5px;}
+.row.f{border-bottom:none;padding-top:13px;}
+.row.f .name::before{content:"▸ ";color:var(--text-faint);font-weight:400;}
+
+.badge{
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;
+  letter-spacing:0.08em;padding:2px 6px;border:1px solid;border-radius:2px;white-space:nowrap;
+}
+.b-hbi{color:var(--hbi);border-color:rgba(224,104,79,.45);}
+.b-mbi{color:var(--mbi);border-color:rgba(217,162,43,.45);}
+.b-lbi{color:var(--lbi);border-color:rgba(78,143,110,.5);}
+.b-canary{color:var(--policy);border-color:rgba(217,162,43,.5);background:rgba(217,162,43,.08);}
+.b-team{color:var(--access);border-color:rgba(63,167,150,.45);}
+.b-ba{color:var(--text-faint);border-color:var(--line);}
+.b-warn{color:var(--alert);border-color:rgba(224,104,79,.5);background:rgba(224,104,79,.08);}
+
+.rule-strip{
+  margin-top:18px;padding:14px 16px;
+  border:1px dashed var(--line);
+  font-size:13px;color:var(--text-dim);line-height:1.6;
+}
+.rule-strip b{color:var(--text);font-weight:600;}
+
+/* ---------- services band ---------- */
+.svc-band{
+  margin-top:22px;
+  border:1px solid var(--line);
+  border-top:3px solid var(--service);
+  background:linear-gradient(180deg,rgba(168,116,200,.09),transparent 62%),var(--panel);
+}
+.svc-inner{padding:22px 24px 26px;}
+.svc-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;}
+.svc-top h3{font-family:"Archivo",sans-serif;font-weight:700;font-size:17px;margin:0;letter-spacing:-0.01em;}
+.svc-top .who{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--service);}
+.svc-lead{color:var(--text-dim);font-size:14px;margin:10px 0 20px;max-width:96ch;}
+.svc-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);}
+.svc-card{background:var(--panel-2);padding:15px 16px;}
+.svc-card .n{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--service);}
+.svc-card .o{font-size:12.5px;color:var(--text-dim);margin-top:7px;line-height:1.5;}
+.svc-card .o b{color:var(--text);font-weight:500;}
+.spans{
+  margin-top:18px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  color:var(--text-faint);letter-spacing:0.03em;
+}
+
+/* ---------- coverage callout ---------- */
+.coverage{
+  margin-top:22px;
+  border:1px solid rgba(224,104,79,.4);
+  border-left:3px solid var(--alert);
+  background:rgba(224,104,79,.05);
+  padding:22px 24px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:26px;
+}
+.coverage h3{font-family:"Archivo",sans-serif;font-weight:700;font-size:17px;margin:0 0 6px;color:var(--alert);letter-spacing:-0.01em;}
+.coverage .id{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--text-dim);}
+.coverage p{margin:0 0 12px;font-size:14px;color:var(--text-dim);line-height:1.6;}
+.coverage p:last-child{margin-bottom:0;}
+.coverage b{color:var(--text);font-weight:600;}
+
+/* ---------- rules ---------- */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);}
+.rule{background:var(--panel);padding:20px 22px 22px;}
+.rule .tagline{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-faint);}
+.rule h4{font-family:"Archivo",sans-serif;font-weight:700;font-size:15.5px;margin:10px 0 8px;letter-spacing:-0.005em;}
+.rule p{margin:0;font-size:13.5px;color:var(--text-dim);line-height:1.6;}
+.rule code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--access);}
+
+/* ---------- sequence ---------- */
+.seq{border:1px solid var(--line);}
+.step{
+  display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1.15fr);
+  gap:20px;padding:18px 22px;border-bottom:1px solid var(--line-soft);
+  align-items:baseline;background:var(--panel);
+}
+.step:last-child{border-bottom:none;}
+.step .num{font-family:"Archivo",sans-serif;font-weight:900;font-size:26px;color:var(--line);letter-spacing:-0.04em;}
+.step h4{margin:0;font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:14.5px;}
+.step p{margin:0;font-size:13.5px;color:var(--text-dim);line-height:1.55;}
+.step.gate{background:rgba(217,162,43,.05);}
+.step.gate .num{color:var(--policy);}
+
+/* ---------- open questions ---------- */
+.oq{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;}
+.oq-card{border:1px solid var(--line);border-top:2px solid var(--alert);background:var(--panel);padding:19px 20px 21px;}
+.oq-card h4{margin:0 0 9px;font-family:"Archivo",sans-serif;font-weight:700;font-size:15px;letter-spacing:-0.005em;}
+.oq-card p{margin:0;font-size:13.5px;color:var(--text-dim);line-height:1.6;}
+.oq-card .ask{display:block;margin-top:11px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--alert);}
+
+footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 24px;}
+footer span{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--text-faint);letter-spacing:0.06em;}
+
+/* ---------- motion ---------- */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none;}
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:1080px){
+  .trace-grid{grid-template-columns:1fr;}
+  .fan{display:none;}
+  .lens{margin-left:0;margin-top:-1px;}
+  .trees{grid-template-columns:1fr;}
+  .coverage{grid-template-columns:1fr;gap:16px;}
+  .step{grid-template-columns:44px 1fr;}
+  .step p{grid-column:2;}
+}
+@media (max-width:560px){
+  body{background-size:38px 38px;}
+  .row{flex-wrap:wrap;}
+  .row .scope{margin-left:0;width:100%;text-align:left;}
+}
+
+/* ---------- print ---------- */
+@media print{
+  body{background:#fff;color:#111;background-image:none;}
+  .wrap{max-width:none;padding:0;}
+  .tree,.rule,.step,.svc-band,.oq-card,.asset-card,.lens,.svc-card{background:#fff !important;}
+  .row .name,.asset-card .nm,.lens .v{color:#111;}
+  .sec-note,.rule p,.step p,.oq-card p,.deck{color:#444;}
+  .reveal{opacity:1;transform:none;}
+  .sec{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Wiz project architecture · proposed · v2</div>
+    <h1 class="display">Four roots and a<br>service catalog. <em>One asset,<br>three lenses.</em></h1>
+    <p class="deck">A Wiz project has exactly one parent. That single constraint is why policy scope and developer access cannot share a hierarchy — so build <strong>disjoint project trees over overlapping assets</strong>: two for Humana, two more for subsidiaries as top-level peers rather than children. The Service Catalog carries the per-APPSVC granularity that would otherwise explode your project count.</p>
+    <div class="meta">
+      <span>Multi-cloud · GCP + Azure + AWS + OCI</span>
+      <span>GitHub EMU · Azure DevOps</span>
+      <span>Registries · Kubernetes</span>
+      <span>Subsidiaries</span>
+      <span>Confidential</span>
+    </div>
+  </header>
+
+  <!-- SIGNATURE -->
+  <section class="trace reveal">
+    <div class="trace-head">
+      <h2>Read it from one asset outward</h2>
+      <p>Every asset lands in exactly one policy leaf, exactly one team project, and exactly one service. Nothing else in this design matters if that sentence stops being true.</p>
+    </div>
+    <div class="trace-grid">
+      <div class="asset-card">
+        <div class="lbl">The asset</div>
+        <div class="nm">aks-grpmed-prod-01</div>
+        <div class="tag">humana-resource-id&nbsp;=<br><b>APP0000646</b><br>env = prod · AZOHP Prod MG</div>
+      </div>
+      <div class="fan" aria-hidden="true">
+        <svg viewBox="0 0 46 300" preserveAspectRatio="none">
+          <path d="M0 150 H20 V52 H46" fill="none" stroke="#D9A22B" stroke-width="1"/>
+          <path d="M0 150 H20 V150 H46" fill="none" stroke="#3FA796" stroke-width="1"/>
+          <path d="M0 150 H20 V248 H46" fill="none" stroke="#A874C8" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="lens p">
+        <div class="k">Lens 1 · Policy</div>
+        <div class="v">cloud › azure › az-prod › humv2</div>
+        <div class="d">Controls fire here. “No public inbound in prod” is scoped to this leaf and nothing else. Admin-visible only.</div>
+      </div>
+      <div class="lens a">
+        <div class="k">Lens 2 · Access</div>
+        <div class="v">dept-dha › dha-group-medicare</div>
+        <div class="d">What the developer sees at login. RBAC binds here. Everything outside this project is invisible to them.</div>
+      </div>
+      <div class="lens s">
+        <div class="k">Lens 3 · Ownership</div>
+        <div class="v">svc-app0000646-grpmed-crm</div>
+        <div class="d">Who gets the ticket. Service spans cloud, repo, image and namespace, and carries the named owner.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TREES -->
+  <section class="sec reveal">
+    <div class="sec-head"><h2 class="display">Humana · two roots</h2></div>
+    <p class="sec-note">Tree 1 is shaped by enforcement boundaries. Tree 2 is shaped by the org chart. They share no project objects — only assets. Neither tree is allowed to do the other's job. Subsidiaries appear in neither; they get their own pair of roots below.</p>
+
+    <div class="trees">
+
+      <!-- TREE 1 -->
+      <div class="tree t1">
+        <div class="tree-bar">
+          <h3>Tree 1 · Humana Assets</h3>
+          <span class="who">Wiz admins only</span>
+        </div>
+        <div class="tree-sub">A leaf is the smallest thing you would ever scope a single control to. Gap-free and mutually exclusive: every asset in exactly one leaf.</div>
+        <div class="tree-body">
+
+          <div class="node root">
+            <div class="row f"><span class="name">cloud</span><span class="scope">org-node scoped</span></div>
+            <div class="node">
+              <div class="row f"><span class="name">gcp</span></div>
+              <div class="node">
+                <div class="row f"><span class="name">gcp1</span><span class="badge b-warn">VERIFY</span><span class="scope">legacy</span></div>
+                <div class="node">
+                  <div class="row"><span class="name">prd</span><span class="badge b-hbi">HBI</span></div>
+                  <div class="row"><span class="name">npe</span><span class="badge b-mbi">MBI</span></div>
+                  <div class="row"><span class="name">sbx</span><span class="badge b-lbi">LBI</span></div>
+                </div>
+
+                <div class="row f"><span class="name">gcp3</span></div>
+                <div class="node">
+                  <div class="row f"><span class="name">core_services</span></div>
+                  <div class="node">
+                    <div class="row"><span class="name">prod</span><span class="badge b-hbi">HBI</span><span class="scope">gcp3/core_services/prod</span></div>
+                    <div class="row"><span class="name">nonprod</span><span class="badge b-mbi">MBI</span><span class="scope">gcp3/core_services/nonprod</span></div>
+                    <div class="row"><span class="name">perf</span><span class="badge b-mbi">MBI</span><span class="scope">gcp3/core_services/perf</span></div>
+                    <div class="row"><span class="name">sbx</span><span class="badge b-lbi">LBI</span><span class="scope">gcp3/core_services/sbx</span></div>
+                  </div>
+                  <div class="row f"><span class="name">humins</span></div>
+                  <div class="node">
+                    <div class="row"><span class="name">prod</span><span class="badge b-hbi">HBI</span><span class="scope">gcp3/humins/prod</span></div>
+                    <div class="row"><span class="name">nonprod</span><span class="badge b-mbi">MBI</span><span class="scope">gcp3/humins/nonprod</span></div>
+                    <div class="row"><span class="name">perf</span><span class="badge b-mbi">MBI</span><span class="scope">gcp3/humins/perf</span></div>
+                    <div class="row"><span class="name">sbx</span><span class="badge b-lbi">LBI</span><span class="scope">gcp3/humins/sbx</span></div>
+                  </div>
+                  <div class="row f"><span class="name">migrated · shared_services · centerwell</span><span class="scope">same 4-env pattern</span></div>
+                </div>
+              </div>
+
+              <div class="row f"><span class="name">azure</span></div>
+              <div class="node">
+                <div class="row f"><span class="name">az-prod</span><span class="badge b-hbi">HBI</span><span class="scope">Prod MG</span></div>
+                <div class="node">
+                  <div class="row"><span class="name">humv1</span><span class="scope">sub-MG</span></div>
+                  <div class="row"><span class="name">humv2</span><span class="scope">sub-MG</span></div>
+                  <div class="row"><span class="name">humv3</span><span class="scope">sub-MG</span></div>
+                </div>
+                <div class="row f"><span class="name">az-nonprod</span><span class="badge b-mbi">MBI</span><span class="scope">NonProd MG</span></div>
+                <div class="node">
+                  <div class="row"><span class="name">humv1</span><span class="scope">sub-MG</span></div>
+                  <div class="row"><span class="name">humv2</span><span class="scope">sub-MG</span></div>
+                  <div class="row"><span class="name">humv3</span><span class="scope">sub-MG</span></div>
+                </div>
+                <div class="row"><span class="name">az-policytest</span><span class="badge b-canary">CANARY</span><span class="scope">PolicyTest MG · no sub-seg</span></div>
+                <div class="row"><span class="name">az-sandbox</span><span class="badge b-lbi">LBI</span><span class="scope">Sandbox MG · no sub-seg</span></div>
+              </div>
+
+              <div class="row f"><span class="name">aws</span><span class="badge b-warn">VERIFY</span></div>
+              <div class="node">
+                <div class="row"><span class="name">prod</span><span class="badge b-hbi">HBI</span><span class="scope">OU per env</span></div>
+                <div class="row"><span class="name">nonprod</span><span class="badge b-mbi">MBI</span><span class="scope">OU per env</span></div>
+                <div class="row"><span class="name">sbx</span><span class="badge b-lbi">LBI</span><span class="scope">OU per env</span></div>
+              </div>
+
+              <div class="row f"><span class="name">oci</span><span class="badge b-warn">VERIFY</span></div>
+              <div class="node">
+                <div class="row"><span class="name">prod</span><span class="badge b-hbi">HBI</span><span class="scope">compartment per env</span></div>
+                <div class="row"><span class="name">nonprod</span><span class="badge b-mbi">MBI</span><span class="scope">compartment per env</span></div>
+                <div class="row"><span class="name">sbx</span><span class="badge b-lbi">LBI</span><span class="scope">compartment per env</span></div>
+              </div>
+            </div>
+
+            <div class="row f"><span class="name">code</span><span class="scope">VCS + build scoped</span></div>
+            <div class="node">
+              <div class="row f"><span class="name">github</span><span class="scope">by EMU org</span></div>
+              <div class="node">
+                <div class="row"><span class="name">Healthcare-Services-EMU</span><span class="scope">GH org</span></div>
+                <div class="row"><span class="name">High-Performance-Engineering-EMU</span><span class="scope">GH org</span></div>
+                <div class="row"><span class="name">Group-Portfolio-HIT-EMU</span><span class="scope">GH org</span></div>
+              </div>
+              <div class="row f"><span class="name">azure-devops</span><span class="scope">by ADO project</span></div>
+              <div class="node">
+                <div class="row"><span class="name">EIP</span><span class="badge b-canary">CANARY</span><span class="scope">ADO project</span></div>
+                <div class="row"><span class="name">DHA</span><span class="scope">ADO project</span></div>
+                <div class="row"><span class="name">…</span><span class="scope">one per ADO project</span></div>
+              </div>
+            </div>
+
+            <div class="row f"><span class="name">registries</span></div>
+            <div class="node">
+              <div class="row"><span class="name">gar · acr · ecr · ocir</span><span class="scope">registry links</span></div>
+            </div>
+
+            <div class="row f"><span class="name">kubernetes</span></div>
+            <div class="node">
+              <div class="row"><span class="name">shared-clusters</span><span class="scope">cluster link + ns label</span></div>
+            </div>
+
+          </div>
+
+          <div class="rule-strip">
+            <b>Controls scope here and nowhere else.</b> Set <span class="mono">environment</span> and <span class="mono">business_impact</span> on every link — that is what gives developers a prod-first view without you building a project per team per environment.
+          </div>
+
+          <div class="rule-strip" style="margin-top:10px;">
+            <b>The folder reads short, the project name does not.</b> Wiz's control-scope picker is a flat search box with no hierarchy, and you will have a dozen leaves called <span class="mono">prod</span>. Nest the folders as shown, but name each leaf project by its full path — <span class="mono">gcp3-core_services-prod</span>, <span class="mono">az-prod-humv2</span>, <span class="mono">ado-eip</span>. Otherwise someone eventually scopes a prod rule to the wrong estate.
+          </div>
+        </div>
+      </div>
+
+      <!-- TREE 2 -->
+      <div class="tree t2">
+        <div class="tree-bar">
+          <h3>Tree 2 · Humana Access</h3>
+          <span class="who">Developer self-service</span>
+        </div>
+        <div class="tree-sub">Department → Team. Depth stops at the team. Membership is a multi-APPSVC tag query generated from the CMDB, never hand-maintained.</div>
+        <div class="tree-body">
+
+          <div class="node root">
+            <div class="row f"><span class="name">dept-eip</span><span class="badge b-ba">BUSINESS AREA</span></div>
+            <div class="node">
+              <div class="row"><span class="name">eip-product-security-tools</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">eip-devsecops</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">eip-cloud-security-arch</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">eip-ai-security</span><span class="badge b-team">TEAM</span></div>
+            </div>
+
+            <div class="row f"><span class="name">dept-dha</span><span class="badge b-ba">BUSINESS AREA</span></div>
+            <div class="node">
+              <div class="row"><span class="name">dha-team-a</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">dha-group-medicare</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">dha-…</span><span class="scope">one per team</span></div>
+            </div>
+
+            <div class="row f"><span class="name">dept-hit</span><span class="badge b-ba">BUSINESS AREA</span></div>
+            <div class="node">
+              <div class="row"><span class="name">hit-…</span><span class="badge b-team">TEAM</span></div>
+            </div>
+
+          </div>
+
+          <div class="rule-strip">
+            <b>Where SSO actually lands.</b> Nobody logs into a project. SSO authenticates the user once at the tenant (Entra → SAML/OIDC), and the IdP group claim maps to a Wiz role <em>scoped to a project</em>. One Entra group per team project, granting a scoped Member role. Grant on the <span class="mono">dept-*</span> folder instead and the user gets every team beneath it — that is the Business Area lead role, not the developer one.
+          </div>
+
+          <div class="rule-strip" style="margin-top:10px;">
+            <b>Projects do not contain resources.</b> A project is a saved scope, not a bucket. Nothing is ever placed into <span class="mono">dha-group-medicare</span> by hand — it resolves to whatever currently matches its APPSVC tag query across cloud, repos, registries and namespaces. Add a resource with the right tag tomorrow and it appears; retag it and it moves.
+          </div>
+
+          <div class="rule-strip">
+            <b>RBAC binds here and nowhere else.</b> Each team project unions that team's APPSVCs across cloud, code, registry and Kubernetes, so a developer sees their whole stack in one place — and nothing else. Entra group → SCIM → project role, sourced from the same CMDB record that defines membership.
+          </div>
+
+          <div class="rule-strip" style="margin-top:10px;">
+            <b>Do not add an environment layer here.</b> Team × environment is a combinatorial trap. Developers filter by the <span class="mono">environment</span> value already set on Tree 1's links.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="svc-band">
+      <div class="svc-inner">
+        <div class="svc-top">
+          <h3>Service Catalog · spans both trees</h3>
+          <span class="who">Ownership &amp; routing</span>
+        </div>
+        <p class="svc-lead">This is the piece that keeps Tree 2 shallow. One service per APPSVC, auto-discovered from <span class="mono">humana-resource-id</span> tags plus Helm and ArgoCD metadata. Services are not bound by the project hierarchy, so a single service can reach across a policy leaf, a team project, a repo and a namespace at once — which is exactly what an application actually is.</p>
+        <div class="svc-cards">
+          <div class="svc-card">
+            <div class="n">svc-app0000646-grpmed-crm</div>
+            <div class="o">Owner: <b>Group Medicare CRM</b><br>AKS · ADO pipeline · ACR · 2 subs</div>
+          </div>
+          <div class="svc-card">
+            <div class="n">svc-app0001204-claims-intake</div>
+            <div class="o">Owner: <b>DHA Team A</b><br>GKE · GitHub repo · GAR</div>
+          </div>
+          <div class="svc-card">
+            <div class="n">svc-app0000318-wiz-tooling</div>
+            <div class="o">Owner: <b>Product Security Tools</b><br>Azure Functions · GitHub repo</div>
+          </div>
+          <div class="svc-card">
+            <div class="n">svc-…</div>
+            <div class="o">One per APPSVC<br>Owner from CMDB, reviewed on accept</div>
+          </div>
+        </div>
+        <div class="spans">Service → owner drives ticket routing (ServiceNow / Jira). Same identity feeds the developer's “just my app” filter inside their team project.</div>
+      </div>
+    </div>
+
+    <!-- COVERAGE -->
+    <div class="coverage">
+      <div>
+        <h3>Tag coverage</h3>
+        <div class="id mono">a report, not a project</div>
+      </div>
+      <div>
+        <p>With no <span class="mono">unowned</span> project in the tree, coverage still has to live somewhere or it stops being anyone's problem. Make it a <b>saved query plus a weekly report</b>: assets in a Tree 1 leaf that resolve to no service and no team project.</p>
+        <p><b>This is the highest-risk dependency in the design.</b> Everything on the access side is a tag query, so an asset missing <span class="mono">humana-resource-id</span> is invisible to every developer and to every service — silently. If coverage is below roughly 95%, fix tagging at the landing zone with a deny-untagged policy before opening self-service.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBSIDIARY ROOTS -->
+  <section class="sec reveal">
+    <div class="sec-head"><h2 class="display">Subsidiaries · two more roots</h2></div>
+    <p class="sec-note">Not nested under Humana. Peers to it, at the top level, mirroring the same pattern so nothing new has to be learned — but with their own policy baseline, their own IdP, and their own admins. Each subsidiary is a folder inside these roots, which is what makes a divestiture a clean lift rather than an excavation.</p>
+
+    <div class="trees">
+
+      <div class="tree t1">
+        <div class="tree-bar">
+          <h3>Root 3 · Subsidiary Assets</h3>
+          <span class="who">Subsidiary + Humana admins</span>
+        </div>
+        <div class="tree-sub">Same leaf rule as Humana: gap-free, mutually exclusive, one control target per boundary. Different baseline — do not assume Humana's controls apply.</div>
+        <div class="tree-body">
+          <div class="node root">
+            <div class="row f"><span class="name">maxhealth</span></div>
+            <div class="node">
+              <div class="row"><span class="name">azure · prd</span><span class="badge b-hbi">HBI</span><span class="scope">MaxHealth-AZ → PRD</span></div>
+              <div class="row"><span class="name">azure · nonprd</span><span class="badge b-mbi">MBI</span><span class="scope">NPE · SBX</span></div>
+              <div class="row"><span class="name">gcp · prd</span><span class="badge b-hbi">HBI</span><span class="scope">MaxHealth-GCP → PRD</span></div>
+              <div class="row"><span class="name">code</span><span class="scope">own VCS orgs</span></div>
+            </div>
+            <div class="row f"><span class="name">centerwell</span></div>
+            <div class="node">
+              <div class="row"><span class="name">azure · gcp · code</span><span class="scope">same pattern</span></div>
+            </div>
+            <div class="row f"><span class="name">onehome · conviva</span></div>
+            <div class="node">
+              <div class="row"><span class="name">…</span><span class="scope">one folder per subsidiary</span></div>
+            </div>
+          </div>
+          <div class="rule-strip">
+            <b>Separate control set, not a copy.</b> Clone Humana's baseline as a starting point, then let it diverge. A subsidiary inheriting Humana policy by accident is how you get a compliance finding you cannot explain.
+          </div>
+        </div>
+      </div>
+
+      <div class="tree t2">
+        <div class="tree-bar">
+          <h3>Root 4 · Subsidiary Access</h3>
+          <span class="who">Subsidiary developers</span>
+        </div>
+        <div class="tree-sub">Subsidiary → Team, same shape as Humana. Their IdP, their groups, their SCIM feed. No Humana group grants access here and no subsidiary group reaches into Humana's roots.</div>
+        <div class="tree-body">
+          <div class="node root">
+            <div class="row f"><span class="name">dept-maxhealth</span><span class="badge b-ba">SUBSIDIARY</span></div>
+            <div class="node">
+              <div class="row"><span class="name">maxhealth-claims</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">maxhealth-platform</span><span class="badge b-team">TEAM</span></div>
+              <div class="row"><span class="name">maxhealth-…</span><span class="scope">one per team</span></div>
+            </div>
+            <div class="row f"><span class="name">dept-centerwell</span><span class="badge b-ba">SUBSIDIARY</span></div>
+            <div class="node">
+              <div class="row"><span class="name">centerwell-…</span><span class="badge b-team">TEAM</span></div>
+            </div>
+            <div class="row f"><span class="name">dept-onehome · dept-conviva</span><span class="badge b-ba">SUBSIDIARY</span></div>
+            <div class="node">
+              <div class="row"><span class="name">…</span><span class="scope">same pattern</span></div>
+            </div>
+          </div>
+          <div class="rule-strip">
+            <b>Own SSO, own APPSVC namespace.</b> If a subsidiary does not use <span class="mono">humana-resource-id</span>, it needs its own discovery rule for the Service Catalog. Do not force their tags into Humana's convention just to make one query work.
+          </div>
+          <div class="rule-strip" style="margin-top:10px;">
+            <b>Folders are not isolation.</b> A separate root makes the boundary legible and easy to audit. It does not make the data legally segregated. If that is the requirement, the answer is a separate tenant — see the open question below.<br><br><b>Service discovery needs its own rule here.</b> Wiz can discover services from tags, Helm charts or ArgoCD apps. With no ownership tag, subsidiary services come from Helm/ArgoCD metadata, repo ownership, or a manual definition per account.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="sec reveal">
+    <div class="sec-head"><h2 class="display">Rules that keep it from rotting</h2></div>
+    <p class="sec-note">The structure survives a reorg. The discipline is what usually doesn't — write these down and enforce them in review.</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="tagline">Scoping</div>
+        <h4>Controls target Tree 1 only</h4>
+        <p>Never scope a control to an ownership project. Team membership drifts as people move, and enforcement coverage would fall away silently.</p>
+      </div>
+      <div class="rule">
+        <div class="tagline">Rollout</div>
+        <h4>Canary, then widen</h4>
+        <p>Every new control follows one path: <code>azohp-policytest</code> or a single ADO project → whole non-prod → prod. The structure supports it; make it the ritual.</p>
+      </div>
+      <div class="rule">
+        <div class="tagline">Reporting</div>
+        <h4>Never sum across trees</h4>
+        <p>An asset lives in both, so totals double. Tree 1 is the record for compliance and coverage. Tree 2 is the record for remediation and SLA. Put that in the dashboard titles.</p>
+      </div>
+      <div class="rule">
+        <div class="tagline">Provisioning</div>
+        <h4>Nothing is hand-created</h4>
+        <p>Both trees are generated from the CMDB via <code>wiz_project</code> Terraform and reconciled nightly. Pin the provider version and keep a GraphQL fallback — it is community-maintained, not shipped by Wiz.</p>
+      </div>
+      <div class="rule">
+        <div class="tagline">Naming</div>
+        <h4>The picker is flat</h4>
+        <p>Folders nest; the search box does not. Leaf project names carry their own path: <code>gcp3-humins-prod</code>, <code>az-prod-humv2</code>, <code>dha-group-medicare</code>, <code>svc-app0000646-…</code>.</p>
+      </div>
+      <div class="rule">
+        <div class="tagline">Attributes</div>
+        <h4>Criticality lives in Tree 1</h4>
+        <p>HBI/MBI/LBI belongs on stable enforcement leaves. Ownership projects churn with every reorg, and business impact should not churn with them.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD ORDER -->
+  <section class="sec reveal">
+    <div class="sec-head"><h2 class="display">Build order</h2></div>
+    <p class="sec-note">Genuinely sequential — each step is load-bearing for the next. The long pole is first, and it is not a Wiz problem.</p>
+    <div class="seq">
+      <div class="step">
+        <div class="num">1</div>
+        <h4>Tag coverage and repo ownership mapping</h4>
+        <p>Cloud resources carry APPSVC tags. Repos do not — you need GitHub custom properties, CODEOWNERS, or a repo→APPSVC table. Namespaces use labels; images resolve through code-to-cloud lineage. This is the hardest engineering work here and it gates everything downstream.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h4>Tree 1 in Terraform</h4>
+        <p>Gap-free, mutually exclusive, with <span class="mono">environment</span> and <span class="mono">business_impact</span> set on every link. Prove coverage by asserting that unassigned asset count equals the <span class="mono">unowned</span> project count. Stand up the subsidiary policy root in the same pass, with its own baseline.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h4>Migrate controls onto Tree 1 leaves</h4>
+        <p>Retire every ad-hoc scope. From this point the answer to “where does this rule apply” is always a project name.</p>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <h4>Turn on Service Catalog discovery</h4>
+        <p>Review suggested services, accept them, assign owners from the CMDB. Do not treat it as an inventory exercise — the value is the owner field.</p>
+      </div>
+      <div class="step gate">
+        <div class="num">5</div>
+        <h4>Tree 2, piloted with one team</h4>
+        <p>Generated from the CMDB. Pick a team that will tell you honestly when their view is wrong, and do not scale until it is right. This is the gate that decides whether developers trust the platform.</p>
+      </div>
+      <div class="step">
+        <div class="num">6</div>
+        <h4>Route issues by service owner, then open self-service</h4>
+        <p>Tickets land in the right queue automatically. Only then announce it broadly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPEN QUESTIONS -->
+  <section class="sec reveal">
+    <div class="sec-head"><h2 class="display">Three answers you need before you build</h2></div>
+    <p class="sec-note">Each of these changes the design if the answer goes the wrong way. Get them settled first.</p>
+    <div class="oq">
+      <div class="oq-card">
+        <h4>Is environment separated by org node in gcp1, AWS and OCI?</h4>
+        <p>AZOHP management groups already give you a clean prod/non-prod boundary. If AWS accounts or the gcp1 legacy estate mix environments, your “Azure prod only” rule works and your “AWS prod only” rule leaks — and tags will not save you.</p>
+        <span class="ask">Ask: cloud platform team, per provider</span>
+      </div>
+      <div class="oq-card">
+        <h4>What is the authoritative repo → APPSVC mapping?</h4>
+        <p>Tree 2 and the Service Catalog both assume every repo resolves to a team. Across three EMU orgs plus ADO, that mapping has to exist somewhere and be maintained. If it doesn't exist yet, step 1 is longer than it looks.</p>
+        <span class="ask">Ask: EMU org admins + CMDB owner</span>
+      </div>
+      <div class="oq-card">
+        <h4>Separate roots, or a separate tenant?</h4>
+        <p>Roots 3 and 4 make the boundary legible and auditable, and they make a divestiture a lift rather than an excavation. What they do not do is segregate the data — a Humana global admin still sees everything. If the requirement is legal segregation rather than tidy separation, only a separate tenant satisfies it, and retrofitting that after go-live is brutal.</p>
+        <span class="ask">Ask: legal and M&amp;A, before step 2</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Proposed design · v2</span>
+    <span>Supersedes: Final Two-Tree Design</span>
+    <span>Change: prefixes dropped for natural nesting; subsidiaries lifted to top-level roots; access tree flattened to team level; Service Catalog added; coverage project added</span>
+    <span>Confidential</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    els.forEach(function(e){ e.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  },{threshold:0.08});
+  els.forEach(function(e){ io.observe(e); });
+})();
+</script>
+</body>
+</html>
